@@ -30,7 +30,10 @@ class PA:
         self.v_filtered = np.array([0.0, 0.0])
         self.alpha_v = 0.2
         self.prev_force_engaged = False
-    
+
+        self.mouse_k = 0.5
+
+
     def run(self):
         p = self.physics
         g = self.graphics
@@ -79,9 +82,9 @@ class PA:
             velocity = (xh - self.prev_xh) / dt
             self.v_filtered = self.alpha_v * velocity + (1.0 - self.alpha_v) * self.v_filtered
 
-        if norm_ball <= self.R:
+        if norm_ball <= self.R: #inside the ball
             strength = self.k * (norm_ball / self.R)
-        elif norm_ball <= self.R + self.offset:
+        elif norm_ball <= self.R + self.offset: #outside the ball but inside the offset boundary
             strength = self.k * (1 - dist_from_ball_outline / self.offset)
         else:
             strength = 0.0
@@ -96,6 +99,30 @@ class PA:
             #damping_force = np.array([0.0, 0.0])
 
         force_engaged = (v_radial < 0)
+
+        # Moving the  mouse in the opposite direction of the re-engaged force
+        # -----------------------------------------------------------------------------------
+        if not self.prev_force_engaged and force_engaged:
+            print("strength", strength)
+            displ = strength / self.mouse_k  # displacement that the mouse should have from the tool
+
+            mouse_displ_vector = - direction * displ  # components of displacement in each direction
+            mouse_displ_x_int = int(np.round(mouse_displ_vector[0]))
+            mouse_displ_y_int = int(np.round(mouse_displ_vector[1]))
+
+            pygame.mouse.set_pos(int(x_tool + mouse_displ_x_int), int(y_tool + mouse_displ_y_int))
+
+            displacement_mouse = np.sqrt(mouse_displ_x_int ** 2 + mouse_displ_y_int ** 2)  # magnitude of displacement
+            force_applied = self.mouse_k * displacement_mouse
+
+            print("actual force applied", force_applied)
+            xm = (float(x_tool + mouse_displ_x_int), float(y_tool + mouse_displ_y_int))
+
+            print("set_pos to:", (x_tool + mouse_displ_x_int), (y_tool + mouse_displ_y_int))
+            print("pygame mouse:", pygame.mouse.get_pos())
+            print("xm before sim:", xm)
+
+        # -----------------------------------------------------------------------------------
 
         if force_engaged:
             #fe = spring_force + damping_force
@@ -118,7 +145,7 @@ class PA:
                 pygame.mouse.set_pos((int(xh[0]), int(xh[1])))
                 xm = (float(xh[0]), float(xh[1]))
 
-            xh = g.sim_forces(xh,fe,xm,mouse_k=0.5,mouse_b=0.8)
+            xh = g.sim_forces(xh,fe,xm,self.mouse_k,mouse_b=0.8)
             pos_phys = g.inv_convert_pos(xh)
             pA0,pB0,pA,pB,pE = p.derive_device_pos(pos_phys)
             pA0,pB0,pA,pB,xh = g.convert_pos(pA0,pB0,pA,pB,pE)

@@ -22,9 +22,10 @@ class PA:
         self.x_ball = xc
         self.y_ball = yc
 
-        self.R = 120
-        self.offset = 50
-        self.k = -10
+        self.R = 60.0
+        self.R_max = 130.0
+        self.offset = 40
+        self.k = -self.R / 15
         self.b = 0.003
 
         self.prev_xh = None
@@ -38,6 +39,9 @@ class PA:
         self.max_preload_pixels = 200.0
         self.mouse_k = 0.5
         self.mouse_b = 0.6
+
+        self.radius_growth_gain = 0.1
+        self.radius_increase_speed_threshold = 20.0
 
     def run(self):
         p = self.physics
@@ -104,6 +108,16 @@ class PA:
             v_radial = 0.0
             damping_force = np.array([0.0, 0.0])
 
+        dt = 1.0 / g.FPS
+        inside_main_circle = norm_ball <= self.R
+        moving_inward_fast_enough = v_radial < -self.radius_increase_speed_threshold
+
+        if inside_main_circle and moving_inward_fast_enough:
+            inward_step = -v_radial * dt
+            self.R += self.radius_growth_gain * inward_step
+            self.R = min(self.R, self.R_max)
+            self.k = -self.R / 15
+
         force_engaged = (v_radial < 0.0)
 
         if force_engaged:
@@ -113,8 +127,8 @@ class PA:
             fe = np.array([0.0, 0.0])
             ball_color = (255, 0, 0)
 
-        pygame.draw.circle(g.screenVR, ball_color, (int(self.x_ball), int(self.y_ball)), int(self.R), 0)
-        pygame.draw.circle(g.screenVR, (255, 255, 255), (int(self.x_ball), int(self.y_ball)), int(self.R), 2)
+        pygame.draw.circle(g.screenVR, ball_color, (int(self.x_ball), int(self.y_ball)), int(self.R + self.offset / 2), 0)
+        pygame.draw.circle(g.screenVR, (255, 255, 255), (int(self.x_ball), int(self.y_ball)), int(self.R + self.offset / 2), 2)
 
         self.prev_xh = xh.copy()
 

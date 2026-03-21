@@ -2,10 +2,9 @@
 import sys
 import numpy as np
 import pygame
-
+import math
 from Physics import Physics
 from Graphics import Graphics
-
 
 class Start:
     print("yahoooo")
@@ -43,6 +42,24 @@ class PA:
         self.radius_growth_gain = 0.1
         self.radius_increase_speed_threshold = 20.0
 
+        # visualization variables
+        self.ball_position_x = 300
+        self.ball_position_y = 200
+        self.ball_radius = 20
+        self.prev_ball_position_x = 300
+        self.prev_ball_position_y = 200
+        self.prev_ball_radius = 20
+
+        self.trail_positions = [] #holds the positions of where the field ball has been
+        self.trail_colour = [] #holds how many times that position has been visited to adjust the colour
+        self.motion_dir  = np.array([0.0, 0.0])
+
+        self.dot1_position_x, self.dot1_position_y = 305, 210
+        # self.dot2_position_x, self.dot2_position_y = 315, 198
+        # self.dot3_position_x, self.dot3_position_y = 295, 195
+        # self.dot4_position_x, self.dot4_position_y = 290, 205
+        # self.dot5_position_x, self.dot5_position_y = 285, 198
+
     def run(self):
         p = self.physics
         g = self.graphics
@@ -70,6 +87,70 @@ class PA:
                 g.show_linkages = not g.show_linkages
             if key == ord("d"):
                 g.show_debug = not g.show_debug
+
+            # Field visualization
+            # -------------------------------
+
+            times_visited_position = sum(
+                1 for x, y, r, col in self.trail_positions if x == self.ball_position_x and y == self.ball_position_y)
+            if times_visited_position == 0:  # the area becomes light green
+                self.trail_positions.append([self.ball_position_x, self.ball_position_y, self.ball_radius, g.cGreen3])
+            elif times_visited_position == 1:  # the area becomes a bit more green
+                self.trail_positions.append([self.ball_position_x, self.ball_position_y, self.ball_radius, g.cGreen2])
+            else:
+                self.trail_positions.append([self.ball_position_x, self.ball_position_y, self.ball_radius,
+                                             g.cGreen1])  # the area is fully cleaned out
+
+
+            #MOTION OF FIELD BALL ROLLING WITH HAPTICS
+            #---------------------------------------
+            # motion_mag_ball = 0 #magnitude in big ball pixels
+            # self.motion_dir = #some unit vector showing direction of motion
+            #
+            # scale_factor = 3
+            # motion_mag_field = motion_mag_ball/scale_factor #motion in the field in pixels
+            # motion_field_pixels = motion_mag_field * self.motion_dir #motion in the field in each direction in pixels
+            # self.ball_position_x += motion_field_pixels[0] #adding the motion to the existing position x
+            # self.ball_position_y += motion_field_pixels[1] #adding the motion to the existing position y
+            # self.dot1_position_x += self.ball_position_x * 1.2 #moving the dot by the same direction, a bit faster to show roll
+            # self.dot1_position_y += self.ball_position_y *1.2  #moving the dot by the same direction, a bit faster to show roll
+
+            #DOT TO SIMULATE ROLLING (just one for now, not tested)
+            # bx, by, br = self.ball_position_x, self.ball_position_y, self.ball_radius #rename big circle variables
+            # sx, sy, sr = self.dot1_position_x, self.dot1_position_y, 1  # rename small circle variables
+            # distance = math.hypot(sx - bx, sy - by) #calculate the distance between the centers
+            # if distance + sr > br: #dot not in view anymore
+            #     self.dot1_position_x, self.dot1_position_y = -self.motion_dir * self.ball_radius #if it starts being outside the radius, sends it back to the beginning of the circle in the opposite direction of motion
+
+
+            # MOTION OF FIELD BALL ROLLING WITH KEYS
+            if key == ord('a'):
+                # self.trail_positions.append([, self.ball_position_y, self.ball_radius])
+                self.ball_radius += 5
+                print("self.ball_radius", self.ball_radius)
+            if key == ord('s'):
+                # self.trail_positions.append([self.ball_position_x, self.ball_position_y, self.ball_radius])
+                self.ball_position_x += 5
+                print("self.ball_position_x", self.ball_position_x)
+                self.dot1_position_x +=7
+
+            if key == ord('w'):
+                # self.trail_positions.append([self.ball_position_x, self.ball_position_y, self.ball_radius])
+                self.ball_position_x -= 5
+                self.dot1_position_x -= 7
+                print("self.ball_position_x", self.ball_position_x)
+            if key == ord('f'):
+                # self.trail_positions.append([self.ball_position_x, self.ball_position_y, self.ball_radius])
+                self.ball_position_y += 5
+                self.dot1_position_y += 7
+                print("self.ball_position_y", self.ball_position_y)
+            if key == ord('g'):
+                # self.trail_positions.append([self.ball_position_x, self.ball_position_y, self.ball_radius])
+                self.ball_position_y -= 5
+                self.dot1_position_y -= 7
+                print("self.ball_position_y", self.ball_position_y)
+            # ----------------------------------
+
 
         x_tool = xh[0]
         y_tool = xh[1]
@@ -127,8 +208,45 @@ class PA:
             fe = np.array([0.0, 0.0])
             ball_color = (255, 0, 0)
 
-        pygame.draw.circle(g.screenVR, ball_color, (int(self.x_ball), int(self.y_ball)), int(self.R + self.offset / 2), 0)
+        new_ball_radius = int(self.R + self.offset / 2)
+        pygame.draw.circle(g.screenVR, ball_color, (int(self.x_ball), int(self.y_ball)), new_ball_radius, 0)
         pygame.draw.circle(g.screenVR, (255, 255, 255), (int(self.x_ball), int(self.y_ball)), int(self.R + self.offset / 2), 2)
+
+        # FIELD VISUALIZATION
+        # -------------------------------
+
+        self.ball_radius = new_ball_radius/3
+
+        # times_visited_position = sum(1 for x, y, r, col in self.trail_positions if x == self.ball_position_x and y == self.ball_position_y)
+        # if times_visited_position == 0:  # the area becomes light green
+        #     self.trail_positions.append([self.ball_position_x, self.ball_position_y, self.ball_radius, g.cGreen3])
+        # elif times_visited_position == 1:  # the area becomes a bit more green
+        #     self.trail_positions.append([self.ball_position_x, self.ball_position_y, self.ball_radius, g.cGreen2])
+        # else:
+        #     self.trail_positions.append([self.ball_position_x, self.ball_position_y, self.ball_radius, g.cGreen1])  # the area is fully cleaned out
+
+
+        for i in range(len(self.trail_positions)):
+            pygame.draw.circle(g.screenField, self.trail_positions[i][3], (self.trail_positions[i][0], self.trail_positions[i][1]), self.trail_positions[i][2])
+
+        pygame.draw.circle(g.screenField, g.cIce, [self.ball_position_x, self.ball_position_y], self.ball_radius, 0)
+        pygame.draw.circle(g.screenField, g.cBlack, [self.dot1_position_x, self.dot1_position_y], 1, 0)
+
+
+        self.prev_ball_position_x = self.ball_position_x
+        self.prev_ball_position_y = self.ball_position_y
+        self.prev_ball_radius = self.ball_radius
+        #------------------------
+
+        #VISUALIZATION OF EXPERIMENT 1
+        if g.task3 == True:
+            for i in range(len(self.trail_positions)):
+                pygame.draw.circle(g.screenReference, self.trail_positions[i][3],  (self.trail_positions[i][0], self.trail_positions[i][1]), self.trail_positions[i][2])
+
+            pygame.draw.circle(g.screenReference, g.cIce, [self.ball_position_x, self.ball_position_y], self.ball_radius, 0)
+            pygame.draw.circle(g.screenReference, g.cIce, [self.ball_position_x, self.ball_position_y], self.ball_radius, 0)
+            pygame.draw.circle(g.screenReference, g.cBlack, [self.dot1_position_x, self.dot1_position_y], 1, 0)
+
 
         self.prev_xh = xh.copy()
 

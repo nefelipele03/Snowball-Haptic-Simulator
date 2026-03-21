@@ -22,7 +22,7 @@ class PA:
         self.x_ball = xc
         self.y_ball = yc
 
-        self.R = 150
+        self.R = 120
         self.offset = 50
         self.k = -10
         self.b = 0.003
@@ -33,7 +33,7 @@ class PA:
         self.prev_force_engaged = False
 
         self.align_tol = 4.0
-        self.inward_speed_tol = 5.0
+        self.inward_speed_tol = 0.0
         self.preload_scale = 1.0
         self.max_preload_pixels = 200.0
         self.mouse_k = 0.5

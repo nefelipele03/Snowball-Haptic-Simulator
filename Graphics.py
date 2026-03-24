@@ -86,6 +86,9 @@ class Graphics:
         self.task1 = False
         self.task2 = False
         self.task3 = True #Navigating flowers in the environment
+        
+        self.flower_positions = []
+        self.current_collisions = 0
 
     def convert_pos(self, *positions):
         # invert x because of screen axes
@@ -219,25 +222,80 @@ class Graphics:
 
         ########################Task 3 Visuals #################################################33
         if self.task3 == True:
+            
+            text_surface = self.font.render(f"Collisions: {self.current_collisions}", True, (255, 0, 0))
+            self.screenReference.blit(text_surface, (220, 280))  # top-left corner
+            
             #Add nice image from  https://www.flaticon.com/free-icons/flower
             self.flower= pygame.image.load('flower.png')
             self.flower = pygame.transform.smoothscale(self.flower, (20, 20))
             
+            #draw endgoal
+            pygame.draw.rect(self.screenReference, (0,255,0), (220,300, 60,60))
             
+            def add_flower(x, y):
+                self.screenReference.blit(self.flower, (x, y))
+                self.flower_positions.append((x + 10, y + 10))  # store CENTER (20x20 → +10)
+                
+            self.flower_positions = []
+            
+            #borders
+            for i in range(30):
+                add_flower(i * 20, 0)
+                add_flower(i * 20, 380)
+            
+            for i in range(20):
+                add_flower(0, i * 20)
+                add_flower(580, i * 20)
+            
+            for i in range(4):
+                #tunnel 1 () 
+                add_flower((20*i)+200, 0)
+            
+
+
+            for i in range(7):
+                #tunnel 3 (right wall)
+                add_flower(80, (20*i)+180)
+            
+            for i in range(8):
+                #tunnel 3 (right wall)
+                add_flower(180, 400-(20*i))
+                #tunnel 5 (bottom wall)
+                add_flower(200+(20*i), 260)
+                add_flower(360+(20*i), 80)
+            
+            # tunnel 1 + others
+            for i in range(9):
+                add_flower(260, (20*i))
+                add_flower(500, 100+(20*i))
+            
+            for i in range(10):
+                #tunnel 1 (top and bottom)
+                add_flower((20*i), 0)
+                add_flower((20*i), 80)
+                
+                
+                add_flower((20*i)+80, 160)
+                add_flower(340, 260-(20*i))
+                add_flower(420, 180+(20*i))
+            
+            """
             for i in range(30):
                 self.screenReference.blit(self.flower, [i * 20, 0])
                 self.screenReference.blit(self.flower, [i * 20, 380])
             for i in range(20):
                 self.screenReference.blit(self.flower, [0, i * 20])
                 self.screenReference.blit(self.flower, [580, i * 20])
+           
             
+           
             for i in range(4):
                 #tunnel 1 ()
                 self.screenReference.blit(self.flower, [((20*i)+200), 0])
             
             
             #for i in range(6):        
-                
                 
                 
             
@@ -252,6 +310,7 @@ class Graphics:
             for i in range (8):
                 #tunnel 3 (right wall)
                 self.screenReference.blit(self.flower, [(180), (400- (20*i))])
+                
                 
                 
                 #tunnel 5 (bottom wall)
@@ -272,10 +331,6 @@ class Graphics:
                 
                 
                 
-                
-                
-                
-                
             for i in range(10):
                 #tunnel 1 (top and bottom)
                 self.screenReference.blit(self.flower, [(20*i), 0])
@@ -284,15 +339,18 @@ class Graphics:
                 
                 #tunnel 2 (bottom wall)
                 self.screenReference.blit(self.flower, [((20*i)+80), (160)])
+                pygame.draw.circle(self.screenReference, (0, 0, 255), [(20*i)+80+10, 160+10], 10)
+                
                 
                 #tunnel 6 (right wall)
                 self.screenReference.blit(self.flower, [340, 260-(20*i)])
+                pygame.draw.circle(self.screenReference, (0, 0, 255), [340+10, 260-(20*i)+10], 10)
                 
                 #tunnel 9 (left wall)
                 self.screenReference.blit(self.flower, [420, 180+(20*i)])
                 
             #for i in range(11):
-                
+                """
                 
                 
                 

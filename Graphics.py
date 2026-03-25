@@ -22,8 +22,10 @@ class Graphics:
         self.screenHaptics = pygame.Surface(self.window_size)
         self.screenVR = pygame.Surface(self.window_size)
 
-        self.screenField= pygame.Surface(self.window_size)  # New Screen
-        self.screenReference = pygame.Surface(self.window_size)  # New Screen
+        self.screenField= pygame.Surface(self.window_size)
+        self.screenReference = pygame.Surface(self.window_size)
+
+        self.screenTask1Menu = pygame.Surface(self.window_size)
 
 
         ##add nice icon from https://www.flaticon.com/authors/vectors-market
@@ -32,6 +34,7 @@ class Graphics:
 
         ##add text on top to debugToggle the timing and forces
         self.font = pygame.font.Font('freesansbold.ttf', 18)
+        self.instructions_font = pygame.font.Font('freesansbold.ttf', 14)
 
         pygame.mouse.set_visible(True)  ##Hide cursor by default. 'm' toggles it
 
@@ -44,7 +47,7 @@ class Graphics:
 
         ##initialize "real-time" clock
         self.clock = pygame.time.Clock()
-        self.FPS = 100 #100  # in Hertz
+        self.FPS = 100 # in Hertz
 
         ##define some colors
         self.cWhite = (255, 255, 255)
@@ -58,6 +61,7 @@ class Graphics:
         self.cGreen2 = (102, 255, 102)  # semi clean green
         self.cGreen3 = (204, 255, 204)  # light green
         self.cBlack = (0,0,0)
+        self.cGrey = (213, 218, 219)
 
 
         self.hhandle = pygame.image.load('handle.png')  #
@@ -83,12 +87,15 @@ class Graphics:
         self.show_debug = True
 
         # Task flags, they determine what shows up on the bottom left screen
-        self.task1 = False
+        self.task1 = True #Making snowballs of a specific size
         self.task2 = False
-        self.task3 = True #Navigating flowers in the environment
+        self.task3 = False #Navigating flowers in the environment
         
         self.flower_positions = []
         self.current_collisions = 0
+
+        #Task 1 variables
+        self.reference_radius = 0
 
     def convert_pos(self, *positions):
         # invert x because of screen axes
@@ -188,7 +195,6 @@ class Graphics:
         # if self.task3 == True:
         #     self.screenReference.fill(self.cGreen1)
 
-
     def render(self, pA0, pB0, pA, pB, pE, f, pM):
         ###################Render the Haptic Surface###################
         # set new position of items indicating the endpoint location
@@ -274,8 +280,7 @@ class Graphics:
                 #tunnel 1 (top and bottom)
                 add_flower((20*i), 0)
                 add_flower((20*i), 80)
-                
-                
+
                 add_flower((20*i)+80, 160)
                 add_flower(340, 260-(20*i))
                 add_flower(420, 180+(20*i))
@@ -302,7 +307,6 @@ class Graphics:
             for i in range(7):
                 #tunnel 3 (right wall)
                 self.screenReference.blit(self.flower, [(80), ((20*i)+180)])
-                
                 
                 
                 
@@ -336,7 +340,6 @@ class Graphics:
                 self.screenReference.blit(self.flower, [(20*i), 0])
                 self.screenReference.blit(self.flower, [(20*i), 80])
                 
-                
                 #tunnel 2 (bottom wall)
                 self.screenReference.blit(self.flower, [((20*i)+80), (160)])
                 pygame.draw.circle(self.screenReference, (0, 0, 255), [(20*i)+80+10, 160+10], 10)
@@ -351,12 +354,25 @@ class Graphics:
                 
             #for i in range(11):
                 """
-                
-                
-                
-                
-                
-        ###################Render the VR surface###################
+
+        #Task 1 visuals
+        if self.task1 == True:
+            #instructions
+            instructions1 = self.instructions_font.render(f"Can you make the snowball reach the reference radius without overshooting? ", True, self.cBlack)
+            instructions2 = self.instructions_font.render("Careful! Your snowball is also melting! Press the 'Z' key when you are done.", True, self.cBlack)
+            self.screenReference.blit(instructions1, (10, 10))
+            self.screenReference.blit(instructions2, (10, 40))
+
+            #reference circle
+            self.reference_radius = 100
+            pygame.draw.circle(self.screenReference, self.cGrey, (300, 200), self.reference_radius, 2)
+
+
+
+
+
+
+            ###################Render the VR surface###################
         # pygame.draw.rect(self.screenVR, self.colorHaptic, self.haptic, border_radius=8)
 
         if not self.device_connected:

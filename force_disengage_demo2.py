@@ -41,6 +41,7 @@ class PA:
 
         self.radius_growth_gain = 0.1
         self.radius_increase_speed_threshold = 20.0
+        self.radius_melting_gain = 0.9999
 
         # visualization variables
         self.ball_position_x = 300
@@ -59,6 +60,11 @@ class PA:
         # self.dot3_position_x, self.dot3_position_y = 295, 195
         # self.dot4_position_x, self.dot4_position_y = 290, 205
         # self.dot5_position_x, self.dot5_position_y = 285, 198
+
+        #task 1 variables
+        self.task1_finished = False
+
+
 
     def run(self):
         p = self.physics
@@ -87,6 +93,7 @@ class PA:
                 g.show_linkages = not g.show_linkages
             if key == ord("d"):
                 g.show_debug = not g.show_debug
+
 
             # Field visualization
             # -------------------------------
@@ -149,6 +156,9 @@ class PA:
                 self.ball_position_y -= 5
                 self.dot1_position_y -= 7
                 print("self.ball_position_y", self.ball_position_y)
+
+            if key == ord('z'):
+                self.task1_finished = True
             # ----------------------------------
 
 
@@ -232,13 +242,12 @@ class PA:
         pygame.draw.circle(g.screenField, g.cIce, [self.ball_position_x, self.ball_position_y], self.ball_radius, 0)
         pygame.draw.circle(g.screenField, g.cBlack, [self.dot1_position_x, self.dot1_position_y], 1, 0)
 
-
         self.prev_ball_position_x = self.ball_position_x
         self.prev_ball_position_y = self.ball_position_y
         self.prev_ball_radius = self.ball_radius
         #------------------------
 
-        #VISUALIZATION OF EXPERIMENT 1
+        #VISUALIZATION OF EXPERIMENT 3
         if g.task3 == True:
             for i in range(len(self.trail_positions)):
                 pygame.draw.circle(g.screenReference, self.trail_positions[i][3],  (self.trail_positions[i][0], self.trail_positions[i][1]), self.trail_positions[i][2])
@@ -247,6 +256,36 @@ class PA:
             pygame.draw.circle(g.screenReference, g.cIce, [self.ball_position_x, self.ball_position_y], self.ball_radius, 0)
             pygame.draw.circle(g.screenReference, g.cBlack, [self.dot1_position_x, self.dot1_position_y], 1, 0)
 
+        #VISUALIZATION OF EXPERIMENT 1
+
+        if g.task1 == True:
+            #visualization of ball
+            pygame.draw.circle(g.screenReference, g.cIce, (int(self.x_ball), int(self.y_ball)), new_ball_radius, 0)
+            pygame.draw.circle(g.screenReference, g.cIce, (int(self.x_ball), int(self.y_ball)),
+                               int(self.R + self.offset / 2), 2)
+            self.last_rec_radius = new_ball_radius
+
+            if self.task1_finished == True:
+                #error analysis
+                absolute_error = abs(g.reference_radius - self.last_rec_radius)
+                percentage_error = abs(g.reference_radius - self.last_rec_radius)/g.reference_radius * 100
+                time = pygame.time.get_ticks() /1000
+
+                # self.task1_finished = False
+                print("Task 1 Trial Finished!")
+                print("RESULTS")
+                print("---------------------------------------------------")
+                print("Using Haply: ", self.device_connected)
+                print("Time:", time, "s")
+                print("Target Radius:", g.reference_radius, "pixels")
+                print("Achieved Radius:", self.last_rec_radius, "pixels" )
+                print("Absolute Error:", absolute_error)
+                print("Percentage Error:", percentage_error, "%")
+                print("---------------------------------------------------")
+                sys.exit(0)
+
+        #implement melting
+        self.R = self.R *self.radius_melting_gain
 
         self.prev_xh = xh.copy()
 

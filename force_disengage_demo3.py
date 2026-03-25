@@ -61,8 +61,6 @@ class PA:
         # self.dot4_position_x, self.dot4_position_y = 290, 205
         # self.dot5_position_x, self.dot5_position_y = 285, 198
 
-        #task 1 variables
-        self.task1_finished = False
 
         #ADDED
         # ball rolling variables
@@ -172,8 +170,6 @@ class PA:
                 self.dot1_position_y -= 7
                 print("self.ball_position_y", self.ball_position_y)
 
-            if key == ord('z'):
-                self.task1_finished = True
             # ----------------------------------
 
 
@@ -331,25 +327,25 @@ class PA:
 
         #VISUALIZATION OF EXPERIMENT 1
 
-        if g.task1 == True:
+        if g.task1:
             #visualization of ball
+            time = pygame.time.get_ticks() / 1000
             pygame.draw.circle(g.screenReference, g.cIce, (int(self.x_ball), int(self.y_ball)), new_ball_radius, 0)
             pygame.draw.circle(g.screenReference, g.cIce, (int(self.x_ball), int(self.y_ball)),
                                int(self.R + self.offset / 2), 2)
             self.last_rec_radius = new_ball_radius
 
-            if self.task1_finished == True:
+            if time > 10.00:
                 #error analysis
                 absolute_error = abs(g.reference_radius - self.last_rec_radius)
                 percentage_error = abs(g.reference_radius - self.last_rec_radius)/g.reference_radius * 100
-                time = pygame.time.get_ticks() /1000
+
 
                 # self.task1_finished = False
                 print("Task 1 Trial Finished!")
                 print("RESULTS")
                 print("---------------------------------------------------")
                 print("Using Haply: ", self.device_connected)
-                print("Time:", time, "s")
                 print("Target Radius:", g.reference_radius, "pixels")
                 print("Achieved Radius:", self.last_rec_radius, "pixels" )
                 print("Absolute Error:", absolute_error)

@@ -87,9 +87,9 @@ class Graphics:
         self.show_debug = True
 
         # Task flags, they determine what shows up on the bottom left screen
-        self.task1 = True #Making snowballs of a specific size
+        self.task1 = False #Making snowballs of a specific size
         self.task2 = False
-        self.task3 = False #Navigating flowers in the environment
+        self.task3 = True #Navigating flowers in the environment
         
         self.flower_positions = []
         self.current_collisions = 0

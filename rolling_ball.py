@@ -21,7 +21,7 @@ class PA:
         self.x_ball = xc
         self.y_ball = yc
 
-        self.R = 60.0
+        self.R = 50.0
         self.R_max = 130.0
         self.offset = 40
         self.k = -self.R / 15
@@ -43,8 +43,8 @@ class PA:
         self.radius_increase_speed_threshold = 20.0
 
         # visualization variables
-        self.ball_position_x = 300
-        self.ball_position_y = 200
+        self.ball_position_x = 50
+        self.ball_position_y = 50
         self.ball_radius = 20
         self.prev_ball_position_x = 300
         self.prev_ball_position_y = 200
@@ -64,9 +64,15 @@ class PA:
         self.ball_velocity = np.array([0.0, 0.0])
         self.prev_vel = 0
         self.ball_mass = 1
-        self.ball_damping = 0.95
-        self.force_scale = 0.005
+        self.ball_damping = 0.97
+        self.force_scale = 0.01
+        self.mass_scale = 0.8
         self.ball_acceleration = np.array([0.0, 0.0])
+        
+        self.flower_positions = []
+        self.collision_count = 0
+        
+        self.maze_completed = False
 
     def run(self):
         p = self.physics
@@ -203,7 +209,7 @@ class PA:
 
         if inside_main_circle and moving_inward_fast_enough:
             inward_step = -v_radial * dt
-            self.R += self.radius_growth_gain * inward_step
+            #self.R += self.radius_growth_gain * inward_step
             self.R = min(self.R, self.R_max)
             self.k = -self.R / 15
 
@@ -219,7 +225,7 @@ class PA:
             ball_force = -fe
 
             #acceleration
-            self.ball_acceleration += ((-ball_force * self.force_scale) / self.ball_mass )
+            self.ball_acceleration += ((-ball_force * self.force_scale) / (self.ball_mass * self.mass_scale))
             #print(self.ball_acceleration)
                         
             #velocity
@@ -244,6 +250,43 @@ class PA:
         self.ball_position_y += self.ball_velocity[1]
         
         print(self.ball_velocity)
+        
+        
+        
+        self.flower_positions = self.graphics.flower_positions
+        
+        
+        for flower_x, flower_y in self.graphics.flower_positions:
+            #distance from ball to flower
+            dx = self.ball_position_x - flower_x
+            dy = self.ball_position_y - flower_y
+            dist = np.sqrt(dx**2 + dy**2)
+        
+            if dist < (self.R -20): #+10):
+                print("hit flower")
+                self.collision_count += 1
+                self.graphics.current_collisions = self.collision_count
+                
+                #direction towards flower (unit vector)
+                nx = (self.ball_position_x - flower_x) / dist
+                ny = (self.ball_position_y - flower_y) / dist
+
+                contact_dist = self.R + 10
+                self.ball_position_x = flower_x + nx * contact_dist
+                self.ball_position_y = flower_y + ny * contact_dist
+                
+                self.ball_velocity = np.array([0.0, 0.0])
+                self.ball_acceleration = np.array([0.0, 0.0])
+        
+        #pygame.draw.rect(g.screenReference, (0,255,0), (220,300, 60,60))
+        
+        if 220 <= self.ball_position_x <= 220 + 60 and 300 <= self.ball_position_y <= 300 + 60:
+            self.maze_completed = True
+                
+                
+                
+                
+        
 
         new_ball_radius = int(self.R + self.offset / 2)
         pygame.draw.circle(g.screenVR, ball_color, (int(self.x_ball), int(self.y_ball)), new_ball_radius, 0)
@@ -284,12 +327,16 @@ class PA:
 
         #VISUALIZATION OF EXPERIMENT 1
         if g.task3 == True:
-            for i in range(len(self.trail_positions)):
-                pygame.draw.circle(g.screenReference, self.trail_positions[i][3],  (self.trail_positions[i][0], self.trail_positions[i][1]), self.trail_positions[i][2])
-
-            pygame.draw.circle(g.screenReference, g.cIce, [self.ball_position_x, self.ball_position_y], self.ball_radius, 0)
-            pygame.draw.circle(g.screenReference, g.cIce, [self.ball_position_x, self.ball_position_y], self.ball_radius, 0)
-            pygame.draw.circle(g.screenReference, g.cBlack, [self.dot1_position_x, self.dot1_position_y], 1, 0)
+            if not self.maze_completed:
+                for i in range(len(self.trail_positions)):
+                    pygame.draw.circle(g.screenReference, self.trail_positions[i][3],  (self.trail_positions[i][0], self.trail_positions[i][1]), self.trail_positions[i][2])
+    
+                pygame.draw.circle(g.screenReference, g.cIce, [self.ball_position_x, self.ball_position_y], self.ball_radius, 0)
+                pygame.draw.circle(g.screenReference, g.cIce, [self.ball_position_x, self.ball_position_y], self.ball_radius, 0)
+                pygame.draw.circle(g.screenReference, g.cBlack, [self.dot1_position_x, self.dot1_position_y], 1, 0)
+            
+            elif self.maze_completed:
+                sys.exit(0)
 
         if self.device_connected:
             p.update_force(fe)
@@ -332,13 +379,6 @@ class PA:
             #    self.ball_velocity = [(0,0)]
             #else: 
             #    self.ball_velocity = self.prev_vel
-                
-        
-        
-            
-
-            
-        
         
         
         

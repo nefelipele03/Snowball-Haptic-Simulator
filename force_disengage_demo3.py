@@ -294,9 +294,20 @@ class PA:
             self.ball_acceleration = np.array([0.0, 0.0])
             self.ball_velocity *= self.ball_damping
 
+        # # pos
+        # self.ball_position_x += self.ball_velocity[0]
+        # self.ball_position_y += self.ball_velocity[1]
+
         # pos
         self.ball_position_x += self.ball_velocity[0]
         self.ball_position_y += self.ball_velocity[1]
+
+        field_width, field_height = g.screenField.get_size()
+
+        self.ball_position_x = max(self.ball_radius, min(self.ball_position_x, field_width - self.ball_radius))
+        self.ball_position_y = max(self.ball_radius, min(self.ball_position_y, field_height - self.ball_radius))
+
+        
 
         if g.task3:
             self.flower_positions = self.graphics.flower_positions

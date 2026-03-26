@@ -8,6 +8,7 @@ import numpy as np
 import sys, serial, glob
 # from serial.tools import list_ports
 import time
+import pygame.gfxdraw
 
 class Graphics:
     def __init__(self, device_connected, window_size=(600, 400)):
@@ -19,14 +20,15 @@ class Graphics:
         self.window = pygame.display.set_mode((window_size[0] * 2, window_size[1] *2))  ##twice 600x400 for haptic and VR
         pygame.display.set_caption('Virtual Haptic Device')
 
+        #Menu screen
+        self.screenMenu = pygame.Surface((self.window_size[0]*2, self.window_size[1]*2))
+
         self.screenHaptics = pygame.Surface(self.window_size)
         self.screenVR = pygame.Surface(self.window_size)
-
         self.screenField= pygame.Surface(self.window_size)
         self.screenReference = pygame.Surface(self.window_size)
 
-        self.screenTask1Menu = pygame.Surface(self.window_size)
-
+        # self.screenTask1Menu = pygame.Surface(self.window_size)
 
         ##add nice icon from https://www.flaticon.com/authors/vectors-market
         self.icon = pygame.image.load('robot.png')
@@ -35,6 +37,8 @@ class Graphics:
         ##add text on top to debugToggle the timing and forces
         self.font = pygame.font.Font('freesansbold.ttf', 18)
         self.instructions_font = pygame.font.Font('freesansbold.ttf', 14)
+        self.menutitle_font = pygame.font.Font('Bangers-Regular.ttf', 40)
+        self.menu_subtitle_font = pygame.font.Font('Bangers-Regular.ttf', 25)
 
         pygame.mouse.set_visible(True)  ##Hide cursor by default. 'm' toggles it
 
@@ -54,7 +58,8 @@ class Graphics:
         self.cDarkblue = (36, 90, 190)
         self.cLightblue = (0, 176, 240)
         self.cRed = (255, 0, 0)
-        self.cOrange = (255, 100, 0)
+        self.cOrange = (255, 128, 0)#(255, 100, 0)
+        self.cDarkOrange = (179, 71, 0)#(255, 100, 0)
         self.cYellow = (255, 255, 0)
         self.cIce = (204, 255, 255)
         self.cGreen1 = (0, 153, 0) #fully clean green
@@ -87,15 +92,26 @@ class Graphics:
         self.show_debug = True
 
         # Task flags, they determine what shows up on the bottom left screen
+        self.menu = True #Showing the menu to choose tasks
         self.task1 = False #Making snowballs of a specific size
         self.task2 = False
-        self.task3 = True #Navigating flowers in the environment
+        self.task3 = False #Navigating flowers in the environment
         
         self.flower_positions = []
         self.current_collisions = 0
 
         #Task 1 variables
         self.reference_radius = 0
+
+        #menu variables
+        self.exp1buttoncolour = self.cOrange
+        self.exp2buttoncolour = self.cOrange
+        self.exp3buttoncolour = self.cOrange
+
+    def draw_leaf(self, x, y):
+        pygame.draw.polygon(self.screenMenu, self.cGreen2,[(x, y), (x - 20, y - 40), (x + 20, y - 30)])
+        pygame.draw.polygon(self.screenMenu, self.cGreen1,  [(x, y), (x - 30, y - 20), (x - 5, y - 35)])
+        pygame.draw.polygon(self.screenMenu, self.cGreen3,  [(x, y), (x - 10, y - 50), (x + 10, y - 30)])
 
     def convert_pos(self, *positions):
         # invert x because of screen axes
@@ -135,14 +151,18 @@ class Graphics:
         #########Process events  (Mouse, Keyboard etc...)#########
         events = pygame.event.get()
         keyups = []
+        mouse_clicks = []
+
         for event in events:
             if event.type == pygame.QUIT:  # close window button was pressed
                 sys.exit(0)  # raises a system exit exception so any Finally will actually execute
             elif event.type == pygame.KEYUP:
                 keyups.append(event.key)
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                mouse_clicks.append(event.pos)
 
         mouse_pos = pygame.mouse.get_pos()
-        return keyups, mouse_pos
+        return keyups, mouse_pos, mouse_clicks
 
     def sim_forces(self, pE, f, pM, mouse_k=None, mouse_b=None):
         # simulated device calculations
@@ -190,6 +210,7 @@ class Graphics:
         self.screenVR.fill(self.cWhite)  # erase the VR surface
         self.screenField.fill(self.cWhite)  # Added
         self.screenReference.fill(self.cWhite)
+        self.screenMenu.fill(self.cWhite)
         self.debug_text = ""
 
         # if self.task3 == True:
@@ -207,6 +228,15 @@ class Graphics:
         # pygame.draw.rect(self.screenHaptics, self.effort_color, self.haptic,border_radius=4)
         pygame.draw.rect(self.screenHaptics, self.effort_color, self.effort_cursor, border_radius=8)
 
+        #home button to get back to menu
+        # Add nice image from  https://www.flaticon.com/free-icons/home-button
+        self.home = pygame.image.load('home.png')
+        self.home = pygame.transform.smoothscale(self.home, (30, 30))
+        self.home_rect = self.home.get_rect(topleft=(10, 50))
+
+        self.screenHaptics.blit(self.home, self.home_rect.topleft)
+
+
         ######### Robot visualization ###################
         if self.show_linkages:
             pantographColor = (150, 150, 150)
@@ -220,7 +250,6 @@ class Graphics:
                 pygame.draw.circle(self.screenHaptics, (200, 200, 200), p, 6)
 
         ### Hand visualisation
-
         self.screenHaptics.blit(self.hhandle, self.effort_cursor)
         self.screenVR.blit(self.glove, self.haptic)
 
@@ -228,54 +257,54 @@ class Graphics:
 
         ########################Task 3 Visuals #################################################33
         if self.task3 == True:
-            
+
             text_surface = self.font.render(f"Collisions: {self.current_collisions}", True, (255, 0, 0))
             self.screenReference.blit(text_surface, (220, 280))  # top-left corner
-            
+
             #Add nice image from  https://www.flaticon.com/free-icons/flower
             self.flower= pygame.image.load('flower.png')
             self.flower = pygame.transform.smoothscale(self.flower, (20, 20))
-            
+
             #draw endgoal
             pygame.draw.rect(self.screenReference, (0,255,0), (220,300, 60,60))
-            
+
             def add_flower(x, y):
                 self.screenReference.blit(self.flower, (x, y))
                 self.flower_positions.append((x + 10, y + 10))  # store CENTER (20x20 → +10)
-                
+
             self.flower_positions = []
-            
+
             #borders
             for i in range(30):
                 add_flower(i * 20, 0)
                 add_flower(i * 20, 380)
-            
+
             for i in range(20):
                 add_flower(0, i * 20)
                 add_flower(580, i * 20)
-            
+
             for i in range(4):
-                #tunnel 1 () 
+                #tunnel 1 ()
                 add_flower((20*i)+200, 0)
-            
+
 
 
             for i in range(7):
                 #tunnel 3 (right wall)
                 add_flower(80, (20*i)+180)
-            
+
             for i in range(8):
                 #tunnel 3 (right wall)
                 add_flower(180, 400-(20*i))
                 #tunnel 5 (bottom wall)
                 add_flower(200+(20*i), 260)
                 add_flower(360+(20*i), 80)
-            
+
             # tunnel 1 + others
             for i in range(9):
                 add_flower(260, (20*i))
                 add_flower(500, 100+(20*i))
-            
+
             for i in range(10):
                 #tunnel 1 (top and bottom)
                 add_flower((20*i), 0)
@@ -284,7 +313,7 @@ class Graphics:
                 add_flower((20*i)+80, 160)
                 add_flower(340, 260-(20*i))
                 add_flower(420, 180+(20*i))
-            
+
             """
             for i in range(30):
                 self.screenReference.blit(self.flower, [i * 20, 0])
@@ -356,7 +385,7 @@ class Graphics:
                 """
 
         #Task 1 visuals
-        if self.task1 == True:
+        if self.task1:
             #instructions
             instructions1 = self.instructions_font.render(f"Can you make the snowball reach the reference radius without overshooting? ", True, self.cBlack)
             instructions2 = self.instructions_font.render("Careful! Your snowball is also melting! Press the 'Z' key when you are done.", True, self.cBlack)
@@ -367,6 +396,66 @@ class Graphics:
             self.reference_radius = 100
             pygame.draw.circle(self.screenReference, self.cGrey, (300, 200), self.reference_radius, 2)
 
+        #MENU VISUALIZATION
+        if self.menu:
+            menu_title1= self.menutitle_font.render("TURBO SNOWMAN-MAKING", True, self.cBlack)
+            menu_title2 = self.menutitle_font.render("SIMULATOR X-TREME 3000", True, self.cBlack)
+            menu_subtitle = self.menu_subtitle_font.render("RO47013 - CHR-Ice", True, self.cBlack)
+
+            #ice slope
+            pygame.gfxdraw.filled_trigon(self.screenMenu,0, 800,1200, 800,0, 500, self.cIce)
+            #snowball balls
+            pygame.draw.circle(self.screenMenu, self.cIce, (200, 490), 80, 0)
+            pygame.draw.circle(self.screenMenu, self.cIce, (200, 360), 60, 0)
+            pygame.draw.circle(self.screenMenu, self.cIce, (200, 270), 40, 0)
+
+            #buttons - bottom snowball
+            pygame.draw.circle(self.screenMenu, self.cBlack, (200, 450), 5, 0)
+            pygame.draw.circle(self.screenMenu, self.cBlack, (200, 490), 5, 0)
+            pygame.draw.circle(self.screenMenu, self.cBlack, (200, 530), 5, 0)
+            #buttons - middle snowball
+            pygame.draw.circle(self.screenMenu, self.cBlack, (200, 320), 5, 0)
+            pygame.draw.circle(self.screenMenu, self.cBlack, (200, 360), 5, 0)
+            pygame.draw.circle(self.screenMenu, self.cBlack, (200, 400), 5, 0)
+
+            #eyes - top snowball
+            pygame.draw.circle(self.screenMenu, self.cBlack, (190, 260), 4, 0)
+            pygame.draw.circle(self.screenMenu, self.cBlack, (210, 260), 4, 0)
+            #smile
+            pygame.draw.arc(self.screenMenu,self.cBlack,(185, 270, 30, 20),np.pi,  0,2 )
+            #carrot nse
+            pygame.gfxdraw.filled_trigon(self.screenMenu, 200, 260, 200, 275, 250, 270, self.cOrange)
+
+            #hat!
+            self.hat = pygame.image.load('hat.png')
+            self.hat = pygame.transform.smoothscale(self.hat, (85, 85))
+            self.screenMenu.blit(self.hat, (145, 160))
+            #scarf!
+            self.scarf = pygame.image.load('scarf.png')
+            self.scarf = pygame.transform.smoothscale(self.scarf, (55, 55))
+            self.screenMenu.blit(self.scarf, (175, 300))
+
+            self.screenMenu.blit(menu_title1, (500, 100))
+            self.screenMenu.blit(menu_title2, (500, 150))
+            self.screenMenu.blit(menu_subtitle, (600, 200))
+
+            #Experiment Buttons
+            experiment1_text = self.menu_subtitle_font.render("Experiment 1", True, self.cBlack)
+            experiment2_text = self.menu_subtitle_font.render("Experiment 2", True, self.cBlack)
+            experiment3_text = self.menu_subtitle_font.render("Experiment 3", True, self.cBlack)
+
+            pygame.gfxdraw.filled_trigon(self.screenMenu, 580, 315, 580, 410, 850, 362, self.exp1buttoncolour) #experimetn 1
+            pygame.gfxdraw.filled_trigon(self.screenMenu, 580, 415, 580, 510, 850, 462, self.exp2buttoncolour) #experiment 2
+            pygame.gfxdraw.filled_trigon(self.screenMenu, 580, 515, 580, 610, 850, 562, self.exp3buttoncolour) #experiment 3
+
+            #Leaves for the carrots
+            self.draw_leaf(580, 363)
+            self.draw_leaf(580, 463)
+            self.draw_leaf(580, 563)
+
+            self.screenMenu.blit(experiment1_text, (600, 350))
+            self.screenMenu.blit(experiment2_text, (600, 450))
+            self.screenMenu.blit(experiment3_text, (600, 550))
 
 
 
@@ -378,10 +467,13 @@ class Graphics:
         if not self.device_connected:
             pygame.draw.lines(self.screenHaptics, (0, 0, 0), False, [self.effort_cursor.center, pM], 2)
         ##Fuse it back together
-        self.window.blit(self.screenHaptics, (0, 0))
-        self.window.blit(self.screenVR, (600, 0))
-        self.window.blit(self.screenField, (0, 400))
-        self.window.blit(self.screenReference, (600, 400))
+        if self.menu:
+            self.window.blit(self.screenMenu, (0, 0))
+        else:
+            self.window.blit(self.screenHaptics, (0, 0))
+            self.window.blit(self.screenVR, (600, 0))
+            self.window.blit(self.screenField, (0, 400))
+            self.window.blit(self.screenReference, (600, 400))
 
         ##Print status in  overlay
         if self.show_debug:

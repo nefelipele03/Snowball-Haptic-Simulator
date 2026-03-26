@@ -88,14 +88,24 @@ class Graphics:
 
         # Task flags, they determine what shows up on the bottom left screen
         self.task1 = False #Making snowballs of a specific size
-        self.task2 = False
-        self.task3 = True #Navigating flowers in the environment
+        self.task2 = True  #Estimating snowball size
+        self.task3 = False #Navigating flowers in the environment
         
         self.flower_positions = []
         self.current_collisions = 0
 
         #Task 1 variables
         self.reference_radius = 0
+
+        self.task2_stage = 0
+        self.task2_current_trial = 0
+        self.task2_total_trials = 5
+        self.task2_target_radius = 50
+        self.task2_first_snowball_size = None
+        self.task2_results = []
+
+        self.task2_results = []
+        self.task2_initial_ball_size_at_startup = None
 
     def convert_pos(self, *positions):
         # invert x because of screen axes
@@ -368,12 +378,62 @@ class Graphics:
             pygame.draw.circle(self.screenReference, self.cGrey, (300, 200), self.reference_radius, 2)
 
 
-
-
-
-
             ###################Render the VR surface###################
         # pygame.draw.rect(self.screenVR, self.colorHaptic, self.haptic, border_radius=8)
+
+        if self.task2 == True:
+            if self.task2_stage == 0:
+                instructions1 = self.instructions_font.render(
+                    "This experiment tests your ability to estimate snowball size.",
+                    True, self.cBlack
+                )
+                instructions2 = self.instructions_font.render(
+                    "First, make a snowball of any size.",
+                    True, self.cBlack
+                )
+                instructions3 = self.instructions_font.render(
+                    "Press 'X' when you are happy with the size of your snowball.",
+                    True, self.cBlack
+                )
+
+                self.screenReference.blit(instructions1, (10, 10))
+                self.screenReference.blit(instructions2, (10, 40))
+                self.screenReference.blit(instructions3, (10, 70))
+
+            elif self.task2_stage == 1:
+                instructions1 = self.instructions_font.render(
+                    f"Make a snowball of size {self.task2_target_radius}. Press 'X' when ready.",
+                    True, self.cBlack
+                )
+                instructions2 = self.instructions_font.render(
+                    f"Trial {min(self.task2_current_trial + 1, self.task2_total_trials)} / {self.task2_total_trials}",
+                    True, self.cBlack
+                )
+
+                self.screenReference.blit(instructions1, (10, 10))
+                self.screenReference.blit(instructions2, (10, 40))
+
+                y0 = 90
+                # Show reference (first free try)
+                if self.task2_first_snowball_size is not None:
+                    ref_text = self.instructions_font.render(
+                        f"Reference size: {self.task2_first_snowball_size}",
+                        True,
+                        self.cBlack
+                    )
+                    self.screenReference.blit(ref_text, (10, y0))
+                    y0 += 30
+
+                # Show trials
+                for i, result in enumerate(self.task2_results, start=1):
+                    error = abs(result - self.task2_target_radius)
+                    result_text = self.instructions_font.render(
+                        f"Trial {i}: size = {result}, error = {error}",
+                        True,
+                        self.cBlack
+                    )
+                    self.screenReference.blit(result_text, (10, y0))
+                    y0 += 30
 
         if not self.device_connected:
             pygame.draw.lines(self.screenHaptics, (0, 0, 0), False, [self.effort_cursor.center, pM], 2)

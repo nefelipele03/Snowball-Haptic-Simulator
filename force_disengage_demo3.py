@@ -20,9 +20,12 @@ class PA:
 
         self.x_ball = xc
         self.y_ball = yc
+        
+        self.task3_init = True
 
         self.R = 60.0
         self.R_max = 130.0
+        self.R_min = 20
         self.offset = 40
         self.k = -self.R / 15
         self.b = 0.003
@@ -41,7 +44,7 @@ class PA:
 
         self.radius_growth_gain = 0.1
         self.radius_increase_speed_threshold = 20.0
-        self.radius_melting_gain = 0.9999
+        self.radius_melting_gain = 0.9
 
         # visualization variables
         self.ball_position_x = 300
@@ -54,13 +57,6 @@ class PA:
         self.trail_positions = [] #holds the positions of where the field ball has been
         self.trail_colour = [] #holds how many times that position has been visited to adjust the colour
         self.motion_dir  = np.array([0.0, 0.0])
-
-        self.dot1_position_x, self.dot1_position_y = 305, 210
-        # self.dot2_position_x, self.dot2_position_y = 315, 198
-        # self.dot3_position_x, self.dot3_position_y = 295, 195
-        # self.dot4_position_x, self.dot4_position_y = 290, 205
-        # self.dot5_position_x, self.dot5_position_y = 285, 198
-
 
         #ADDED
         # ball rolling variables
@@ -76,14 +72,82 @@ class PA:
         self.collision_count = 0
 
         self.maze_completed = False
+        self.start_time_exp1 = None
+        self.start_time_exp3 = None
+        
+        # Task 2 variables
+        self.task2_stage = 0
+        self.task2_target_radius = 100
+        self.task2_total_trials = 5
+        self.task2_current_trial = 0
+        self.task2_results = []
+        self.task2_finished = False
+        self.task2_first_snowball_size = None
+        self.task2_initial_ball_size_at_startup = int(self.R + self.offset / 2) 
+        self.task2_finish_time = None
+
+        #initialize all variables
+        self.reset_experiments()
         #-----------------------------------
 
+    def reset_experiments(self):
+        """Resets all simulation and experiment variables to their starting state."""
+        xc, yc = self.graphics.screenVR.get_rect().center
+
+        self.x_ball = xc
+        self.y_ball = yc
+        self.R = 60.0
+        self.R_max = 130.0
+        self.R_min = 20
+        self.offset = 40
+        self.k = -self.R / 15
+        self.b = 0.003
+
+        self.prev_xh = None
+        self.v_filtered = np.array([0.0, 0.0])
+        self.prev_force_engaged = False
+
+        # Visualization and Physics state
+        self.ball_position_x = 300
+        self.ball_position_y = 200
+        self.ball_radius = 20
+        self.trail_positions = []
+        self.trail_colour = []
+        self.ball_velocity = np.array([0.0, 0.0])
+        self.ball_acceleration = np.array([0.0, 0.0])
+
+        self.collision_count = 0
+        self.maze_completed = False
+
+        # Reset Graphics-specific flags if necessary
+        self.graphics.current_collisions = 0
+        # Clear the surfaces (trails)
+        self.graphics.screenField.fill((0, 0, 0, 0))  # Or your background color
+        self.graphics.screenReference.fill((0, 0, 0, 0))
+
+        self.maze_completed = False
+        self.start_time_exp1 = None
+        self.start_time_exp3 = None
+
+    def point_in_triangle(self, px, py, A, B, C):
+        # Helper function to compute the sign
+        def sign(p1, p2, p3):
+            return (p1[0] - p3[0]) * (p2[1] - p3[1]) - (p2[0] - p3[0]) * (p1[1] - p3[1])
+
+        d1 = sign((px, py), A, B)
+        d2 = sign((px, py), B, C)
+        d3 = sign((px, py), C, A)
+
+        has_neg = (d1 < 0) or (d2 < 0) or (d3 < 0)
+        has_pos = (d1 > 0) or (d2 > 0) or (d3 > 0)
+
+        return not (has_neg and has_pos)
 
     def run(self):
         p = self.physics
         g = self.graphics
 
-        keyups, xm = g.get_events()
+        keyups, xm, mouse_clicks = g.get_events()
 
         if self.device_connected:
             pA0, pB0, pA, pB, pE = p.get_device_pos()
@@ -98,6 +162,10 @@ class PA:
         g.erase_screen()
 
         for key in keyups:
+            #test
+            if key == ord("k"):
+                g.menu = False
+            #------------
             if key == ord("q"):
                 sys.exit(0)
             if key == ord("m"):
@@ -120,27 +188,6 @@ class PA:
             else:
                 self.trail_positions.append([self.ball_position_x, self.ball_position_y, self.ball_radius,
                                              g.cGreen1])  # the area is fully cleaned out
-
-
-            #MOTION OF FIELD BALL ROLLING WITH HAPTICS
-            #---------------------------------------
-            # motion_mag_ball = 0 #magnitude in big ball pixels
-            # self.motion_dir = #some unit vector showing direction of motion
-            #
-            # scale_factor = 3
-            # motion_mag_field = motion_mag_ball/scale_factor #motion in the field in pixels
-            # motion_field_pixels = motion_mag_field * self.motion_dir #motion in the field in each direction in pixels
-            # self.ball_position_x += motion_field_pixels[0] #adding the motion to the existing position x
-            # self.ball_position_y += motion_field_pixels[1] #adding the motion to the existing position y
-            # self.dot1_position_x += self.ball_position_x * 1.2 #moving the dot by the same direction, a bit faster to show roll
-            # self.dot1_position_y += self.ball_position_y *1.2  #moving the dot by the same direction, a bit faster to show roll
-
-            #DOT TO SIMULATE ROLLING (just one for now, not tested)
-            # bx, by, br = self.ball_position_x, self.ball_position_y, self.ball_radius #rename big circle variables
-            # sx, sy, sr = self.dot1_position_x, self.dot1_position_y, 1  # rename small circle variables
-            # distance = math.hypot(sx - bx, sy - by) #calculate the distance between the centers
-            # if distance + sr > br: #dot not in view anymore
-            #     self.dot1_position_x, self.dot1_position_y = -self.motion_dir * self.ball_radius #if it starts being outside the radius, sends it back to the beginning of the circle in the opposite direction of motion
 
 
             # MOTION OF FIELD BALL ROLLING WITH KEYS
@@ -172,10 +219,52 @@ class PA:
 
             # ----------------------------------
 
+        #Buttons changing colour with hovering
+        if self.point_in_triangle(xm[0], xm[1], (580, 315), (580, 410), (850, 362)):
+            g.exp1buttoncolour = g.cYellow
+            g.exp2buttoncolour = g.cOrange
+            g.exp3buttoncolour = g.cOrange
+        elif self.point_in_triangle(xm[0], xm[1], (580, 415), (580, 510), (850, 462)):
+            g.exp1buttoncolour = g.cOrange
+            g.exp2buttoncolour = g.cYellow
+            g.exp3buttoncolour = g.cOrange
+        elif self.point_in_triangle(xm[0], xm[1], (580, 515), (580, 610), (850, 562)):
+            g.exp1buttoncolour = g.cOrange
+            g.exp2buttoncolour = g.cOrange
+            g.exp3buttoncolour = g.cYellow
+        else:
+            g.exp1buttoncolour = g.cOrange
+            g.exp2buttoncolour = g.cOrange
+            g.exp3buttoncolour = g.cOrange
+
+        if g.menu:
+            # experiment 1 clicked:
+            for mx, my in mouse_clicks:
+                if self.point_in_triangle(mx, my, (580, 315), (580, 410), (850, 362)):
+                    g.task1 = True
+                    #get start time for experiment 1
+                    if self.start_time_exp1 is None:
+                        self.start_time_exp1 = pygame.time.get_ticks() / 1000
+                    g.menu = False
+                if self.point_in_triangle(mx, my, (580, 415), (580, 510), (850, 462)):
+                    g.task2 = True
+                    g.menu = False
+                if self.point_in_triangle(mx, my, (580, 515), (580, 610), (850, 562)):
+                    g.task3 = True
+                    if self.start_time_exp3 is None:
+                        self.start_time_exp3 = pygame.time.get_ticks() / 1000
+                    g.menu = False
+
+        if not g.menu:
+            for mx, my in mouse_clicks:
+                if g.home_rect.collidepoint(mx, my):
+                    self.reset_experiments()
+                    g.menu = True
 
         x_tool = xh[0]
         y_tool = xh[1]
 
+        dx = x_tool - self.x_ball
         dx = x_tool - self.x_ball
         dy = y_tool - self.y_ball
         direction = np.array([0.0, 0.0])
@@ -219,6 +308,7 @@ class PA:
             self.R += self.radius_growth_gain * inward_step
             self.R = min(self.R, self.R_max)
             self.k = -self.R / 15
+            
 
         force_engaged = (v_radial < 0.0)
 
@@ -255,6 +345,23 @@ class PA:
         self.ball_position_y += self.ball_velocity[1]
 
         if g.task3:
+            if self.task3_init:
+                self.ball_position_x = 50.0
+                self.ball_position_y = 50.0
+                self.prev_ball_position_x = 50.0
+                self.prev_ball_position_y = 50.0
+                
+                self.R = 45.0
+                self.R_max = 55.0
+                self.R_min = 40.0
+                
+                self.ball_damping = 0.98
+                self.mass_scale = 0.8
+                
+                self.radius_melting_gain = 0.9999
+                
+                self.task3_init = False
+            
             self.flower_positions = self.graphics.flower_positions
 
             for flower_x, flower_y in self.graphics.flower_positions:
@@ -264,7 +371,7 @@ class PA:
                 dist = np.sqrt(dx ** 2 + dy ** 2)
 
                 if dist < (self.R - 20):  # +10):
-                    print("hit flower")
+                    #print("hit flower")
                     self.collision_count += 1
                     self.graphics.current_collisions = self.collision_count
 
@@ -272,7 +379,7 @@ class PA:
                     nx = (self.ball_position_x - flower_x) / dist
                     ny = (self.ball_position_y - flower_y) / dist
 
-                    contact_dist = self.R + 10
+                    contact_dist = self.R
                     self.ball_position_x = flower_x + nx * contact_dist
                     self.ball_position_y = flower_y + ny * contact_dist
 
@@ -280,11 +387,7 @@ class PA:
                     self.ball_acceleration = np.array([0.0, 0.0])
 
             # pygame.draw.rect(g.screenReference, (0,255,0), (220,300, 60,60))
-
-            if 220 <= self.ball_position_x <= 220 + 60 and 300 <= self.ball_position_y <= 300 + 60:
-                self.maze_completed = True
             #-----------------------------
-
 
 
         new_ball_radius = int(self.R + self.offset / 2)
@@ -296,20 +399,20 @@ class PA:
 
         self.ball_radius = new_ball_radius/3
 
-        # times_visited_position = sum(1 for x, y, r, col in self.trail_positions if x == self.ball_position_x and y == self.ball_position_y)
-        # if times_visited_position == 0:  # the area becomes light green
-        #     self.trail_positions.append([self.ball_position_x, self.ball_position_y, self.ball_radius, g.cGreen3])
-        # elif times_visited_position == 1:  # the area becomes a bit more green
-        #     self.trail_positions.append([self.ball_position_x, self.ball_position_y, self.ball_radius, g.cGreen2])
-        # else:
-        #     self.trail_positions.append([self.ball_position_x, self.ball_position_y, self.ball_radius, g.cGreen1])  # the area is fully cleaned out
+        times_visited_position = sum(1 for x, y, r, col in self.trail_positions if x == self.ball_position_x and y == self.ball_position_y)
+        if times_visited_position == 0:  # the area becomes light green
+            self.trail_positions.append([self.ball_position_x, self.ball_position_y, self.ball_radius, g.cGreen3])
+        elif times_visited_position == 1:  # the area becomes a bit more green
+            self.trail_positions.append([self.ball_position_x, self.ball_position_y, self.ball_radius, g.cGreen2])
+        else:
+            self.trail_positions.append([self.ball_position_x, self.ball_position_y, self.ball_radius, g.cGreen1])  # the area is fully cleaned out
 
 
         for i in range(len(self.trail_positions)):
             pygame.draw.circle(g.screenField, self.trail_positions[i][3], (self.trail_positions[i][0], self.trail_positions[i][1]), self.trail_positions[i][2])
 
         pygame.draw.circle(g.screenField, g.cIce, [self.ball_position_x, self.ball_position_y], self.ball_radius, 0)
-        pygame.draw.circle(g.screenField, g.cBlack, [self.dot1_position_x, self.dot1_position_y], 1, 0)
+        # pygame.draw.circle(g.screenField, g.cBlack, [self.dot1_position_x, self.dot1_position_y], 1, 0)
 
         self.prev_ball_position_x = self.ball_position_x
         self.prev_ball_position_y = self.ball_position_y
@@ -323,19 +426,49 @@ class PA:
 
             pygame.draw.circle(g.screenReference, g.cIce, [self.ball_position_x, self.ball_position_y], self.ball_radius, 0)
             pygame.draw.circle(g.screenReference, g.cIce, [self.ball_position_x, self.ball_position_y], self.ball_radius, 0)
-            pygame.draw.circle(g.screenReference, g.cBlack, [self.dot1_position_x, self.dot1_position_y], 1, 0)
+            # pygame.draw.circle(g.screenReference, g.cBlack, [self.dot1_position_x, self.dot1_position_y], 1, 0)
+            current_time = pygame.time.get_ticks() / 1000 #get current time at each frame
+            
+            if 220 <= self.ball_position_x <= 220 + 60 and 300 <= self.ball_position_y <= 300 + 60:
+                # self.task1_finished = False
+                print("Task 3 Trial Finished!")
+                print("RESULTS")
+                print("---------------------------------------------------")
+                print("Using Haply: ", self.device_connected)
+                print("Number of Collisions:", self.collision_count, "collisions")
+                time_taken = current_time + self.start_time_exp3
+                print("Time Taken:", time_taken, "seconds" )
+                print("---------------------------------------------------")
+                sys.exit(0)
+        
+        # VISUALIZATION / LOGIC OF EXPERIMENT 2
+        if g.task2 == True:
+            if self.task2_finished and self.task2_finish_time is not None:
+                if pygame.time.get_ticks() - self.task2_finish_time >= 2000:
+                    print("Task 2 Finished!")
+                    print("---------------------------------------------------")
+                    print("Using Haply:", self.device_connected)
+                    print("Target size:", self.task2_target_radius)
+                    for i, result in enumerate(self.task2_results, start=1):
+                        error = abs(result - self.task2_target_radius)
+                        print(f"Trial {i}: achieved={result}, error={error}")
+                    avg_error = sum(abs(r - self.task2_target_radius) for r in self.task2_results) / len(self.task2_results)
+                    print("Average absolute error:", avg_error)
+                    print("---------------------------------------------------")
+                    sys.exit(0)
+                
 
         #VISUALIZATION OF EXPERIMENT 1
 
         if g.task1:
             #visualization of ball
-            time = pygame.time.get_ticks() / 1000
+            current_time = pygame.time.get_ticks() / 1000 #get current time at each frame
             pygame.draw.circle(g.screenReference, g.cIce, (int(self.x_ball), int(self.y_ball)), new_ball_radius, 0)
             pygame.draw.circle(g.screenReference, g.cIce, (int(self.x_ball), int(self.y_ball)),
                                int(self.R + self.offset / 2), 2)
             self.last_rec_radius = new_ball_radius
 
-            if time > 10.00:
+            if (current_time-self.start_time_exp1) > 10.00:
                 #error analysis
                 absolute_error = abs(g.reference_radius - self.last_rec_radius)
                 percentage_error = abs(g.reference_radius - self.last_rec_radius)/g.reference_radius * 100
@@ -354,7 +487,8 @@ class PA:
                 sys.exit(0)
 
         #implement melting
-        self.R = self.R *self.radius_melting_gain
+        if (self.R > self.R_min):
+            self.R = self.R *self.radius_melting_gain
 
         self.prev_xh = xh.copy()
 

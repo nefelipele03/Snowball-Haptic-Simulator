@@ -264,7 +264,7 @@ class PA:
             self.R = min(self.R, self.R_max)
             self.k = -self.R / 15
 
-        force_engaged = (v_radial < 0.0)
+        force_engaged = (v_radial < -3.0)
 
         if force_engaged:
             fe = spring_force + damping_force

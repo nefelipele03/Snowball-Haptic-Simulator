@@ -85,7 +85,6 @@ class PA:
         self.task2_first_snowball_size = None
         self.task2_initial_ball_size_at_startup = int(self.R + self.offset / 2) 
         self.task2_finish_time = None
-        
 
     def reset_experiments(self):
         """Resets all simulation and experiment variables to their starting state."""
@@ -248,6 +247,21 @@ class PA:
                     else:
                         self.reset_task2_ball_to_startup_size()
 
+            if key == pygame.K_RETURN:
+                if g.task1_intro:
+                    g.task1_intro = False
+                    g.task1 = True
+                    if self.start_time_exp1 is None:
+                        self.start_time_exp1 = pygame.time.get_ticks() / 1000
+
+                elif g.task2_intro:
+                    g.task2_intro = False
+                    g.task2 = True
+
+                elif g.task3_intro:
+                    g.task3_intro = False
+                    g.task3 = True
+
             # ----------------------------------
 
         #Buttons changing colour with hovering
@@ -269,19 +283,15 @@ class PA:
             g.exp3buttoncolour = g.cOrange
 
         if g.menu:
-            # experiment 1 clicked:
             for mx, my in mouse_clicks:
                 if self.point_in_triangle(mx, my, (580, 315), (580, 410), (850, 362)):
-                    g.task1 = True
-                    #get start time for experiment 1
-                    if self.start_time_exp1 is None:
-                        self.start_time_exp1 = pygame.time.get_ticks() / 1000
+                    g.task1_intro = True
                     g.menu = False
                 if self.point_in_triangle(mx, my, (580, 415), (580, 510), (850, 462)):
-                    g.task2 = True
+                    g.task2_intro = True
                     g.menu = False
                 if self.point_in_triangle(mx, my, (580, 515), (580, 610), (850, 562)):
-                    g.task3 = True
+                    g.task3_intro = True
                     g.menu = False
 
         if not g.menu:
@@ -289,6 +299,12 @@ class PA:
                 if g.home_rect.collidepoint(mx, my):
                     self.reset_experiments()
                     g.menu = True
+                    g.task1 = False
+                    g.task2 = False
+                    g.task3 = False
+                    g.task1_intro = False
+                    g.task2_intro = False
+                    g.task3_intro = False
 
         x_tool = xh[0]
         y_tool = xh[1]
@@ -484,7 +500,7 @@ class PA:
         # VISUALIZATION / LOGIC OF EXPERIMENT 2
         if g.task2 == True:
             if self.task2_finished and self.task2_finish_time is not None:
-                if pygame.time.get_ticks() - self.task2_finish_time >= 2000:
+                if pygame.time.get_ticks() - self.task2_finish_time >= 500:
                     print("Task 2 Finished!")
                     print("---------------------------------------------------")
                     print("Using Haply:", self.device_connected)

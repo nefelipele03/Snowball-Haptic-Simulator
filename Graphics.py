@@ -96,6 +96,10 @@ class Graphics:
         self.task1 = False #Making snowballs of a specific size
         self.task2 = False #Estimating snowball size 
         self.task3 = False #Navigating flowers in the environment
+
+        self.task1_intro = False
+        self.task2_intro = False
+        self.task3_intro = False
         
         self.flower_positions = []
         self.current_collisions = 0
@@ -269,6 +273,93 @@ class Graphics:
 
         # pygame.draw.line(self.screenHaptics, (0, 0, 0), (self.haptic.center),(self.haptic.center+2*k*(xm-xh)))
 
+        if self.task1_intro:
+            lines = [
+                "Task 1: Making a snowball without overshooting",
+                "",
+                "Screen layout:",
+                "Top left: movement of the haptic device (bird's-eye view).",
+                "Top right: the simulated snowball. It grows as you roll it,",
+                "and it can also melt. The ball is red when you are not",
+                "exerting force on it, and green when you are.",
+                "Bottom left: the movement of the snowball in the open world.",
+                "As the ball moves, it leaves a green trail, showing grass",
+                "under the snow.",
+                "Bottom right: the experiment display.",
+                "",
+                "Task:",
+                "After pressing ENTER, you will see a snowball with some",
+                "initial size and an outline showing the reference size.",
+                "Your goal is to make the snowball reach the reference size",
+                "without overshooting it.",
+                "You will have 10 seconds, after which the simulation ends.",
+                "",
+                "Press ENTER to start."
+            ]
+            for i, line in enumerate(lines):
+                text = self.instructions_font.render(line, True, self.cBlack)
+                self.screenReference.blit(text, (10, 10 + i * 20))
+
+
+        if self.task2_intro:
+            lines = [
+                "Task 2: Estimating the snowball size",
+                "",
+                "Screen layout:",
+                "Top left: movement of the haptic device (bird's-eye view).",
+                "Top right: the simulated snowball. It grows as you roll it,",
+                "and it can also melt. The ball is red when you are not",
+                "exerting force on it, and green when you are.",
+                "Bottom left: the movement of the snowball in the open world.",
+                "As the ball moves, it leaves a green trail, showing grass",
+                "under the snow.",
+                "Bottom right: the experiment display.",
+                "",
+                "Task:",
+                "After pressing ENTER, you will first be asked to make a",
+                "snowball of any size you like, to give you a sense of scale.",
+                "After accepting it with X, its size will be shown to you.",
+                "Based on that information, you will then be asked to make",
+                f"a different snowball of size {self.task2_target_radius}.",
+                "You will have 5 trials.",
+                "After each trial, the size of the snowball you made will be",
+                "shown to you, so you can correct for it.",
+                "After each trial, the ball returns to its initial size.",
+                "After the 5th trial, the simulation ends after 2 seconds.",
+                "",
+                "Press ENTER to start."
+            ]
+            for i, line in enumerate(lines):
+                text = self.instructions_font.render(line, True, self.cBlack)
+                self.screenReference.blit(text, (10, 10 + i * 20))
+
+
+        if self.task3_intro:
+            lines = [
+                "Task 3: Navigating through the maze",
+                "",
+                "Screen layout:",
+                "Top left: movement of the haptic device (bird's-eye view).",
+                "Top right: the simulated snowball. It grows as you roll it,",
+                "and it can also melt. The ball is red when you are not",
+                "exerting force on it, and green when you are.",
+                "Bottom left: the movement of the snowball in the open world.",
+                "As the ball moves, it leaves a green trail, showing grass",
+                "under the snow.",
+                "Bottom right: the experiment display.",
+                "",
+                "Task:",
+                "After pressing ENTER, you will see a maze made out of flowers.",
+                "Your goal is to complete the maze while hitting as few",
+                "flowers as possible.",
+                "After each hit, the snowball is moved back to the middle",
+                "of the corridor at the place where the flower was hit.",
+                "",
+                "Press ENTER when you are ready."
+            ]
+            for i, line in enumerate(lines):
+                text = self.instructions_font.render(line, True, self.cBlack)
+                self.screenReference.blit(text, (10, 10 + i * 20))
         ########################Task 3 Visuals #################################################33
         if self.task3 == True:
 
@@ -401,8 +492,10 @@ class Graphics:
         #Task 1 visuals
         if self.task1:
             #instructions
-            instructions1 = self.instructions_font.render(f"Can you make the snowball reach the reference radius without overshooting? ", True, self.cBlack)
-            instructions2 = self.instructions_font.render("Careful! Your snowball is also melting! Press the 'Z' key when you are done.", True, self.cBlack)
+            #instructions1 = self.instructions_font.render(f"Can you make the snowball reach the reference radius without overshooting? ", True, self.cBlack)
+            #instructions2 = self.instructions_font.render("Careful! Your snowball is also melting over time.", True, self.cBlack)            
+            instructions1 = self.instructions_font.render(f" ", True, self.cBlack)
+            instructions2 = self.instructions_font.render(" ", True, self.cBlack)            
             self.screenReference.blit(instructions1, (10, 10))
             self.screenReference.blit(instructions2, (10, 40))
 
@@ -510,7 +603,7 @@ class Graphics:
                 # Show reference (first free try)
                 if self.task2_first_snowball_size is not None:
                     ref_text = self.instructions_font.render(
-                        f"Reference size: {self.task2_first_snowball_size}",
+                        f"Your trial snowball size: {self.task2_first_snowball_size}",
                         True,
                         self.cBlack
                     )

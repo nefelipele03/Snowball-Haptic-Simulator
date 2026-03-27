@@ -94,7 +94,7 @@ class Graphics:
         # Task flags, they determine what shows up on the bottom left screen
         self.menu = True #Showing the menu to choose tasks
         self.task1 = False #Making snowballs of a specific size
-        self.task2 = False
+        self.task2 = False #Estimating snowball size 
         self.task3 = False #Navigating flowers in the environment
         
         self.flower_positions = []
@@ -102,6 +102,18 @@ class Graphics:
 
         #Task 1 variables
         self.reference_radius = 0
+
+        # Task2 Variables
+        self.task2_stage = 0
+        self.task2_current_trial = 0
+        self.task2_total_trials = 5
+        self.task2_target_radius = 50
+        self.task2_first_snowball_size = None
+        self.task2_results = []
+
+        self.task2_results = []
+        self.task2_initial_ball_size_at_startup = None
+
 
         #menu variables
         self.exp1buttoncolour = self.cOrange
@@ -112,6 +124,8 @@ class Graphics:
         pygame.draw.polygon(self.screenMenu, self.cGreen2,[(x, y), (x - 20, y - 40), (x + 20, y - 30)])
         pygame.draw.polygon(self.screenMenu, self.cGreen1,  [(x, y), (x - 30, y - 20), (x - 5, y - 35)])
         pygame.draw.polygon(self.screenMenu, self.cGreen3,  [(x, y), (x - 10, y - 50), (x + 10, y - 30)])
+
+
 
     def convert_pos(self, *positions):
         # invert x because of screen axes
@@ -457,12 +471,117 @@ class Graphics:
             self.screenMenu.blit(experiment2_text, (600, 450))
             self.screenMenu.blit(experiment3_text, (600, 550))
 
+            #ice slope
+            pygame.gfxdraw.filled_trigon(self.screenMenu,0, 800,1200, 800,0, 500, self.cIce)
+            #snowball balls
+            pygame.draw.circle(self.screenMenu, self.cIce, (200, 490), 80, 0)
+            pygame.draw.circle(self.screenMenu, self.cIce, (200, 360), 60, 0)
+            pygame.draw.circle(self.screenMenu, self.cIce, (200, 270), 40, 0)
 
+            #buttons - bottom snowball
+            pygame.draw.circle(self.screenMenu, self.cBlack, (200, 450), 5, 0)
+            pygame.draw.circle(self.screenMenu, self.cBlack, (200, 490), 5, 0)
+            pygame.draw.circle(self.screenMenu, self.cBlack, (200, 530), 5, 0)
+            #buttons - middle snowball
+            pygame.draw.circle(self.screenMenu, self.cBlack, (200, 320), 5, 0)
+            pygame.draw.circle(self.screenMenu, self.cBlack, (200, 360), 5, 0)
+            pygame.draw.circle(self.screenMenu, self.cBlack, (200, 400), 5, 0)
 
+            #eyes - top snowball
+            pygame.draw.circle(self.screenMenu, self.cBlack, (190, 260), 4, 0)
+            pygame.draw.circle(self.screenMenu, self.cBlack, (210, 260), 4, 0)
+            #smile
+            pygame.draw.arc(self.screenMenu,self.cBlack,(185, 270, 30, 20),np.pi,  0,2 )
+            #carrot nse
+            pygame.gfxdraw.filled_trigon(self.screenMenu, 200, 260, 200, 275, 250, 270, self.cOrange)
 
+            #hat!
+            self.hat = pygame.image.load('hat.png')
+            self.hat = pygame.transform.smoothscale(self.hat, (85, 85))
+            self.screenMenu.blit(self.hat, (145, 160))
+            #scarf!
+            self.scarf = pygame.image.load('scarf.png')
+            self.scarf = pygame.transform.smoothscale(self.scarf, (55, 55))
+            self.screenMenu.blit(self.scarf, (175, 300))
+
+            self.screenMenu.blit(menu_title1, (500, 100))
+            self.screenMenu.blit(menu_title2, (500, 150))
+            self.screenMenu.blit(menu_subtitle, (600, 200))
+
+            #Experiment Buttons
+            experiment1_text = self.menu_subtitle_font.render("Experiment 1", True, self.cBlack)
+            experiment2_text = self.menu_subtitle_font.render("Experiment 2", True, self.cBlack)
+            experiment3_text = self.menu_subtitle_font.render("Experiment 3", True, self.cBlack)
+
+            pygame.gfxdraw.filled_trigon(self.screenMenu, 580, 315, 580, 410, 850, 362, self.exp1buttoncolour) #experimetn 1
+            pygame.gfxdraw.filled_trigon(self.screenMenu, 580, 415, 580, 510, 850, 462, self.exp2buttoncolour) #experiment 2
+            pygame.gfxdraw.filled_trigon(self.screenMenu, 580, 515, 580, 610, 850, 562, self.exp3buttoncolour) #experiment 3
+
+            #Leaves for the carrots
+            self.draw_leaf(580, 363)
+            self.draw_leaf(580, 463)
+            self.draw_leaf(580, 563)
+
+            self.screenMenu.blit(experiment1_text, (600, 350))
+            self.screenMenu.blit(experiment2_text, (600, 450))
+            self.screenMenu.blit(experiment3_text, (600, 550))
 
             ###################Render the VR surface###################
         # pygame.draw.rect(self.screenVR, self.colorHaptic, self.haptic, border_radius=8)
+
+        if self.task2 == True:
+            if self.task2_stage == 0:
+                instructions1 = self.instructions_font.render(
+                    "This experiment tests your ability to estimate snowball size.",
+                    True, self.cBlack
+                )
+                instructions2 = self.instructions_font.render(
+                    "First, make a snowball of any size.",
+                    True, self.cBlack
+                )
+                instructions3 = self.instructions_font.render(
+                    "Press 'X' when you are happy with the size of your snowball.",
+                    True, self.cBlack
+                )
+
+                self.screenReference.blit(instructions1, (10, 10))
+                self.screenReference.blit(instructions2, (10, 40))
+                self.screenReference.blit(instructions3, (10, 70))
+
+            elif self.task2_stage == 1:
+                instructions1 = self.instructions_font.render(
+                    f"Make a snowball of size {self.task2_target_radius}. Press 'X' when ready.",
+                    True, self.cBlack
+                )
+                instructions2 = self.instructions_font.render(
+                    f"Trial {min(self.task2_current_trial + 1, self.task2_total_trials)} / {self.task2_total_trials}",
+                    True, self.cBlack
+                )
+
+                self.screenReference.blit(instructions1, (10, 10))
+                self.screenReference.blit(instructions2, (10, 40))
+
+                y0 = 90
+                # Show reference (first free try)
+                if self.task2_first_snowball_size is not None:
+                    ref_text = self.instructions_font.render(
+                        f"Reference size: {self.task2_first_snowball_size}",
+                        True,
+                        self.cBlack
+                    )
+                    self.screenReference.blit(ref_text, (10, y0))
+                    y0 += 30
+
+                # Show trials
+                for i, result in enumerate(self.task2_results, start=1):
+                    error = abs(result - self.task2_target_radius)
+                    result_text = self.instructions_font.render(
+                        f"Trial {i}: size = {result}, error = {error}",
+                        True,
+                        self.cBlack
+                    )
+                    self.screenReference.blit(result_text, (10, y0))
+                    y0 += 30
 
         if not self.device_connected:
             pygame.draw.lines(self.screenHaptics, (0, 0, 0), False, [self.effort_cursor.center, pM], 2)

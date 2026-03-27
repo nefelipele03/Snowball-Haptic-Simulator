@@ -75,6 +75,18 @@ class PA:
         self.reset_experiments()
         #-----------------------------------
 
+        # Task 2 variables
+        self.task2_stage = 0
+        self.task2_target_radius = 100
+        self.task2_total_trials = 5
+        self.task2_current_trial = 0
+        self.task2_results = []
+        self.task2_finished = False
+        self.task2_first_snowball_size = None
+        self.task2_initial_ball_size_at_startup = int(self.R + self.offset / 2) 
+        self.task2_finish_time = None
+        
+
     def reset_experiments(self):
         """Resets all simulation and experiment variables to their starting state."""
         xc, yc = self.graphics.screenVR.get_rect().center
@@ -124,6 +136,14 @@ class PA:
         has_pos = (d1 > 0) or (d2 > 0) or (d3 > 0)
 
         return not (has_neg and has_pos)
+
+        
+
+    def reset_task2_ball_to_startup_size(self):
+        self.R = max(1.0, self.task2_initial_ball_size_at_startup - self.offset / 2)
+        self.k = -self.R / 15
+
+
 
     def run(self):
         p = self.physics
@@ -198,6 +218,35 @@ class PA:
                 self.ball_position_y -= 5
                 self.dot1_position_y -= 7
                 print("self.ball_position_y", self.ball_position_y)
+
+            if key == ord('x') and g.task2:
+                current_size = int(self.R + self.offset / 2)
+
+                if self.task2_stage == 0:
+                    self.task2_first_snowball_size = current_size
+                    self.task2_stage = 1
+                    self.task2_current_trial = 0
+                    self.task2_results = []
+                    print("Task 2 started.")
+                    print(f"Startup ball size: {self.task2_initial_ball_size_at_startup}")
+                    print(f"First free snowball size: {self.task2_first_snowball_size}")
+
+                    self.reset_task2_ball_to_startup_size()
+
+                elif self.task2_stage == 1:
+                    self.task2_results.append(current_size)
+                    self.task2_current_trial += 1
+
+                    print(f"Trial {self.task2_current_trial}/{self.task2_total_trials}")
+                    print(f"Target size: {self.task2_target_radius}")
+                    print(f"Achieved size: {current_size}")
+                    print(f"Error: {abs(current_size - self.task2_target_radius)}")
+
+                    if self.task2_current_trial >= self.task2_total_trials:
+                        self.task2_finished = True
+                        self.task2_finish_time = pygame.time.get_ticks()
+                    else:
+                        self.reset_task2_ball_to_startup_size()
 
             # ----------------------------------
 
@@ -289,7 +338,7 @@ class PA:
             self.R = min(self.R, self.R_max)
             self.k = -self.R / 15
 
-        force_engaged = (v_radial < 0.0)
+        force_engaged = (v_radial < -3.0)
 
         if force_engaged:
             fe = spring_force + damping_force
@@ -319,9 +368,20 @@ class PA:
             self.ball_acceleration = np.array([0.0, 0.0])
             self.ball_velocity *= self.ball_damping
 
+        # # pos
+        # self.ball_position_x += self.ball_velocity[0]
+        # self.ball_position_y += self.ball_velocity[1]
+
         # pos
         self.ball_position_x += self.ball_velocity[0]
         self.ball_position_y += self.ball_velocity[1]
+
+        field_width, field_height = g.screenField.get_size()
+
+        self.ball_position_x = max(self.ball_radius, min(self.ball_position_x, field_width - self.ball_radius))
+        self.ball_position_y = max(self.ball_radius, min(self.ball_position_y, field_height - self.ball_radius))
+
+        
 
         if g.task3:
             self.flower_positions = self.graphics.flower_positions
@@ -420,6 +480,30 @@ class PA:
                 print("Percentage Error:", percentage_error, "%")
                 print("---------------------------------------------------")
                 sys.exit(0)
+
+        # VISUALIZATION / LOGIC OF EXPERIMENT 2
+        if g.task2 == True:
+            if self.task2_finished and self.task2_finish_time is not None:
+                if pygame.time.get_ticks() - self.task2_finish_time >= 2000:
+                    print("Task 2 Finished!")
+                    print("---------------------------------------------------")
+                    print("Using Haply:", self.device_connected)
+                    print("Target size:", self.task2_target_radius)
+                    for i, result in enumerate(self.task2_results, start=1):
+                        error = abs(result - self.task2_target_radius)
+                        print(f"Trial {i}: achieved={result}, error={error}")
+                    avg_error = sum(abs(r - self.task2_target_radius) for r in self.task2_results) / len(self.task2_results)
+                    print("Average absolute error:", avg_error)
+                    print("---------------------------------------------------")
+                    sys.exit(0)
+
+        g.task2_stage = self.task2_stage
+        g.task2_current_trial = self.task2_current_trial
+        g.task2_total_trials = self.task2_total_trials
+        g.task2_target_radius = self.task2_target_radius
+        g.task2_first_snowball_size = self.task2_first_snowball_size
+        g.task2_results = self.task2_results
+        g.task2_initial_ball_size_at_startup = self.task2_initial_ball_size_at_startup
 
         #implement melting
         self.R = self.R *self.radius_melting_gain

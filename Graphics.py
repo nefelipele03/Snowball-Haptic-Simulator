@@ -564,6 +564,61 @@ class Graphics:
             self.screenMenu.blit(experiment2_text, (600, 450))
             self.screenMenu.blit(experiment3_text, (600, 550))
 
+            #ice slope
+            pygame.gfxdraw.filled_trigon(self.screenMenu,0, 800,1200, 800,0, 500, self.cIce)
+            #snowball balls
+            pygame.draw.circle(self.screenMenu, self.cIce, (200, 490), 80, 0)
+            pygame.draw.circle(self.screenMenu, self.cIce, (200, 360), 60, 0)
+            pygame.draw.circle(self.screenMenu, self.cIce, (200, 270), 40, 0)
+
+            #buttons - bottom snowball
+            pygame.draw.circle(self.screenMenu, self.cBlack, (200, 450), 5, 0)
+            pygame.draw.circle(self.screenMenu, self.cBlack, (200, 490), 5, 0)
+            pygame.draw.circle(self.screenMenu, self.cBlack, (200, 530), 5, 0)
+            #buttons - middle snowball
+            pygame.draw.circle(self.screenMenu, self.cBlack, (200, 320), 5, 0)
+            pygame.draw.circle(self.screenMenu, self.cBlack, (200, 360), 5, 0)
+            pygame.draw.circle(self.screenMenu, self.cBlack, (200, 400), 5, 0)
+
+            #eyes - top snowball
+            pygame.draw.circle(self.screenMenu, self.cBlack, (190, 260), 4, 0)
+            pygame.draw.circle(self.screenMenu, self.cBlack, (210, 260), 4, 0)
+            #smile
+            pygame.draw.arc(self.screenMenu,self.cBlack,(185, 270, 30, 20),np.pi,  0,2 )
+            #carrot nse
+            pygame.gfxdraw.filled_trigon(self.screenMenu, 200, 260, 200, 275, 250, 270, self.cOrange)
+
+            #hat!
+            self.hat = pygame.image.load('hat.png')
+            self.hat = pygame.transform.smoothscale(self.hat, (85, 85))
+            self.screenMenu.blit(self.hat, (145, 160))
+            #scarf!
+            self.scarf = pygame.image.load('scarf.png')
+            self.scarf = pygame.transform.smoothscale(self.scarf, (55, 55))
+            self.screenMenu.blit(self.scarf, (175, 300))
+
+            self.screenMenu.blit(menu_title1, (500, 100))
+            self.screenMenu.blit(menu_title2, (500, 150))
+            self.screenMenu.blit(menu_subtitle, (600, 200))
+
+            #Experiment Buttons
+            experiment1_text = self.menu_subtitle_font.render("Experiment 1", True, self.cBlack)
+            experiment2_text = self.menu_subtitle_font.render("Experiment 2", True, self.cBlack)
+            experiment3_text = self.menu_subtitle_font.render("Experiment 3", True, self.cBlack)
+
+            pygame.gfxdraw.filled_trigon(self.screenMenu, 580, 315, 580, 410, 850, 362, self.exp1buttoncolour) #experimetn 1
+            pygame.gfxdraw.filled_trigon(self.screenMenu, 580, 415, 580, 510, 850, 462, self.exp2buttoncolour) #experiment 2
+            pygame.gfxdraw.filled_trigon(self.screenMenu, 580, 515, 580, 610, 850, 562, self.exp3buttoncolour) #experiment 3
+
+            #Leaves for the carrots
+            self.draw_leaf(580, 363)
+            self.draw_leaf(580, 463)
+            self.draw_leaf(580, 563)
+
+            self.screenMenu.blit(experiment1_text, (600, 350))
+            self.screenMenu.blit(experiment2_text, (600, 450))
+            self.screenMenu.blit(experiment3_text, (600, 550))
+
             ###################Render the VR surface###################
         # pygame.draw.rect(self.screenVR, self.colorHaptic, self.haptic, border_radius=8)
 

@@ -275,7 +275,7 @@ class Graphics:
 
         if self.task1_intro:
             lines = [
-                "Task 1: Making a snowball without overshooting",
+                "Task 1: Making a snowball of specific size",
                 "",
                 "Screen layout:",
                 "Top left: movement of the haptic device (bird's-eye view).",
@@ -288,9 +288,9 @@ class Graphics:
                 "Bottom right: the experiment display.",
                 "",
                 "Task:",
-                "After pressing ENTER, you will see a snowball with some initial size and ",
-                "an outline showing the reference size. Your goal is to make the",
-                "snowball reach the reference size without overshooting it.",
+                "After pressing ENTER, you will see a snowball and ",
+                "an outline showing the desired reference size. Your goal is to make the",
+                "snowball match the reference size as closely as possible.",
                 "You will have 10 seconds, after which the simulation ends. You can now play around ",
                 "with the controls to get a feeling for how it operates.",
                 "When you are ready, press ENTER to start ."
@@ -302,7 +302,7 @@ class Graphics:
 
         if self.task2_intro:
             lines = [
-                "Task 2: Estimating the snowball size",
+                "Task 2: Reproducing Snowball Size",
                 "Screen layout:",
                 "Top left: movement of the haptic device (bird's-eye view).",
                 "Top right: the simulated snowball. It grows as you roll it,",
@@ -314,10 +314,11 @@ class Graphics:
                 "Bottom right: the experiment display.",
                 "",
                 "Task:",
+                "Focus on the top right screen for this experiment, on the red snowball size.",
                 "After pressing ENTER, you will first make a snowball of any size to get",
                 "a sense of scale. After accepting it with X, its size will be shown. You will then",
-                f"be asked to make a different snowball of size {self.task2_target_radius}. You will have 5 trials.",
-                "After each trial, you will see the size of the snowball you made and can adjust in the next attempt.",
+                f"be asked to make 10 snowballs of size {self.task2_target_radius}.",
+                "After each trial, you will see the size of the snowball you made for reference.",
                 "After each trial, the ball returns to its initial size. You can now play around",
                 "with the controls to get a feeling for how it operates. When you are ready press ENTER to start.",
             ]
@@ -329,6 +330,7 @@ class Graphics:
         if self.task3_intro:
             lines = [
                 "Task 3: Navigating through the maze",
+
                 "Screen layout:",
                 "Top left: movement of the haptic device (bird's-eye view).",
                 "Top right: the simulated snowball. It grows as you roll it,",
@@ -342,11 +344,11 @@ class Graphics:
                 "Task:",
                 "After pressing ENTER, you will see a maze made out of flowers.",
                 "Your goal is to complete the maze while hitting as few",
-                "flowers as possible.",
-                "After each hit, the snowball is moved back to the middle",
-                "of the corridor at the place where the flower was hit.",
+                "walls of flowers as possible. After each hit, the snowball is moved back to",
+                " the middle of the corridor at the place where the flower was hit.",
                 "You can now play around with the controls to get a feeling for how it operates.",
-                "When you are ready Press ENTER when you are ready."
+                "When you are ready Press ENTER when you are ready.",
+                "Important: Try pushing the ball slowly!",
             ]
             for i, line in enumerate(lines):
                 text = self.instructions_font.render(line, True, self.cBlack)

@@ -81,7 +81,7 @@ class PA:
         # Task 2 variables
         self.task2_stage = 0
         self.task2_target_radius = 100
-        self.task2_total_trials = 5
+        self.task2_total_trials = 10
         self.task2_current_trial = 0
         self.task2_results = []
         self.task2_finished = False
@@ -143,11 +143,11 @@ class PA:
         self.trail_positions = []
         #reset ball position based on the task
         if task1 or task2:
-            self.ball_radius = 45
+            self.R = 60
             self.ball_position_x = 300
             self.ball_position_y = 200
         elif task3:
-            self.ball_radius = 20
+            self.R = 45
             self.ball_position_x = 50.0
             self.ball_position_y = 50.0
 
@@ -278,15 +278,21 @@ class PA:
                 if g.task1_intro:
                     g.task1_intro = False
                     g.task1 = True
+                    g.task2 = False
+                    g.task3 = False
                     if self.start_time_exp1 is None:
                         self.start_time_exp1 = pygame.time.get_ticks() / 1000
 
                 elif g.task2_intro:
                     g.task2_intro = False
+                    g.task1 = False
                     g.task2 = True
+                    g.task3 = False
 
                 elif g.task3_intro:
                     g.task3_intro = False
+                    g.task1 = False
+                    g.task2 = False
                     g.task3 = True
                     if self.start_time_exp3 is None:
                         self.start_time_exp3 = pygame.time.get_ticks() / 1000

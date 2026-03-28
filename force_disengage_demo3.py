@@ -67,7 +67,7 @@ class PA:
         self.prev_vel = 0
         self.ball_mass = 1
         self.ball_damping = 0.97
-        self.force_scale = 0.01
+        self.force_scale = 0.012
         self.mass_scale = 0.8
         self.ball_acceleration = np.array([0.0, 0.0])
 
@@ -388,18 +388,21 @@ class PA:
 
         if force_engaged:
             fe = spring_force + damping_force
+            fe_internal = fe
             ball_color = (0, 255, 0)
         else:
             fe = np.array([0.0, 0.0])
             ball_color = (255, 0, 0)
 
-        if not self.use_force:
+        if not self.use_force: # use_force = False
             fe = np.array([0.0, 0.0])
 
         if force_engaged:
-            ball_force = -fe
+            ball_force = -fe_internal
             self.ball_acceleration += ((-ball_force * self.force_scale) / (self.ball_mass * self.mass_scale))
             self.ball_velocity = self.ball_acceleration
+            print(self.ball_velocity)
+            print(f'force:{ball_force}')
         else:
             ball_force = np.array([0.0, 0.0])
             self.ball_acceleration = np.array([0.0, 0.0])

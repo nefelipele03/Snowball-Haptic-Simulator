@@ -36,7 +36,7 @@ class Graphics:
 
         ##add text on top to debugToggle the timing and forces
         self.font = pygame.font.Font('freesansbold.ttf', 18)
-        self.instructions_font = pygame.font.Font('freesansbold.ttf', 14)
+        self.instructions_font = pygame.font.Font('freesansbold.ttf', 12)
         self.menutitle_font = pygame.font.Font('Bangers-Regular.ttf', 40)
         self.menu_subtitle_font = pygame.font.Font('Bangers-Regular.ttf', 25)
 
@@ -288,13 +288,12 @@ class Graphics:
                 "Bottom right: the experiment display.",
                 "",
                 "Task:",
-                "After pressing ENTER, you will see a snowball with some",
-                "initial size and an outline showing the reference size.",
-                "Your goal is to make the snowball reach the reference size",
-                "without overshooting it.",
-                "You will have 10 seconds, after which the simulation ends.",
-                "",
-                "Press ENTER to start."
+                "After pressing ENTER, you will see a snowball with some initial size and ",
+                "an outline showing the reference size. Your goal is to make the",
+                "snowball reach the reference size without overshooting it.",
+                "You will have 10 seconds, after which the simulation ends. You can now play around ",
+                "with the controls to get a feeling for how it operates.",
+                "When you are ready, press ENTER to start ."
             ]
             for i, line in enumerate(lines):
                 text = self.instructions_font.render(line, True, self.cBlack)
@@ -304,7 +303,6 @@ class Graphics:
         if self.task2_intro:
             lines = [
                 "Task 2: Estimating the snowball size",
-                "",
                 "Screen layout:",
                 "Top left: movement of the haptic device (bird's-eye view).",
                 "Top right: the simulated snowball. It grows as you roll it,",
@@ -316,18 +314,12 @@ class Graphics:
                 "Bottom right: the experiment display.",
                 "",
                 "Task:",
-                "After pressing ENTER, you will first be asked to make a",
-                "snowball of any size you like, to give you a sense of scale.",
-                "After accepting it with X, its size will be shown to you.",
-                "Based on that information, you will then be asked to make",
-                f"a different snowball of size {self.task2_target_radius}.",
-                "You will have 5 trials.",
-                "After each trial, the size of the snowball you made will be",
-                "shown to you, so you can correct for it.",
-                "After each trial, the ball returns to its initial size.",
-                "After the 5th trial, the simulation ends after 2 seconds.",
-                "",
-                "Press ENTER to start."
+                "After pressing ENTER, you will first make a snowball of any size to get",
+                "a sense of scale. After accepting it with X, its size will be shown. You will then",
+                f"be asked to make a different snowball of size {self.task2_target_radius}. You will have 5 trials.",
+                "After each trial, you will see the size of the snowball you made and can adjust in the next attempt.",
+                "After each trial, the ball returns to its initial size. You can now play around",
+                "with the controls to get a feeling for how it operates. When you are ready press ENTER to start.",
             ]
             for i, line in enumerate(lines):
                 text = self.instructions_font.render(line, True, self.cBlack)
@@ -337,7 +329,6 @@ class Graphics:
         if self.task3_intro:
             lines = [
                 "Task 3: Navigating through the maze",
-                "",
                 "Screen layout:",
                 "Top left: movement of the haptic device (bird's-eye view).",
                 "Top right: the simulated snowball. It grows as you roll it,",
@@ -354,8 +345,8 @@ class Graphics:
                 "flowers as possible.",
                 "After each hit, the snowball is moved back to the middle",
                 "of the corridor at the place where the flower was hit.",
-                "",
-                "Press ENTER when you are ready."
+                "You can now play around with the controls to get a feeling for how it operates.",
+                "When you are ready Press ENTER when you are ready."
             ]
             for i, line in enumerate(lines):
                 text = self.instructions_font.render(line, True, self.cBlack)

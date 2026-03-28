@@ -24,7 +24,6 @@ class PA:
         self.task3_init = True
 
         self.R = 60.0
-        print("self.R from init, to 60", self.R)
         self.R_max = 130.0
         self.R_min = 20
         self.offset = 40
@@ -54,6 +53,8 @@ class PA:
         self.prev_ball_position_x = 300
         self.prev_ball_position_y = 200
         self.prev_ball_radius = 20
+
+        self.ball_scale_factor = 3
 
         self.trail_positions = [] #holds the positions of where the field ball has been
         self.trail_colour = [] #holds how many times that position has been visited to adjust the colour
@@ -88,7 +89,7 @@ class PA:
         self.task2_initial_ball_size_at_startup = int(self.R + self.offset / 2) 
         self.task2_finish_time = None
 
-        self.use_force = False
+        self.use_force = True
 
         self.reset_experiments()
 
@@ -99,7 +100,6 @@ class PA:
         self.x_ball = xc
         self.y_ball = yc
         self.R = 60.0
-        print("self.R from reset experiments, to 60", self.R)
         self.R_max = 130.0
         self.R_min = 20
         self.offset = 40
@@ -110,6 +110,7 @@ class PA:
         self.v_filtered = np.array([0.0, 0.0])
         self.prev_force_engaged = False
 
+        self.ball_scale_factor = 3
         # Visualization and Physics state
         self.ball_position_x = 300
         self.ball_position_y = 200
@@ -169,7 +170,6 @@ class PA:
 
     def reset_task2_ball_to_startup_size(self):
         self.R = max(1.0, self.task2_initial_ball_size_at_startup - self.offset / 2)
-        print("self.R from resetting to initial task size for expeiment 2", self.R)
         self.k = -self.R / 15
 
     def get_circle_pixels(self, cx, cy, r):
@@ -185,8 +185,6 @@ class PA:
     def run(self):
         p = self.physics
         g = self.graphics
-
-        print("radius in the beginning of run", self.R)
 
         keyups, xm, mouse_clicks = g.get_events()
 
@@ -383,7 +381,6 @@ class PA:
             inward_step = -v_radial * dt
             self.R += self.radius_growth_gain * inward_step
             self.R = min(self.R, self.R_max)
-            print("self.R from force field", self.R)
             self.k = -self.R / 15
             
 
@@ -429,16 +426,19 @@ class PA:
                 self.ball_position_y = 50.0
                 self.prev_ball_position_x = 50.0
                 self.prev_ball_position_y = 50.0
+
+                self.mass_scale = 1
+                self.radius_growth_gain = 0
+                # self.ball_damping =
                 
                 self.R = 45.0
-                print("self.R from if g.task 3, to 45", self.R)
                 self.R_max = 55.0
                 self.R_min = 40.0
                 
                 self.ball_damping = 0.98
-                self.mass_scale = 0.8
+                self.mass_scale = 1
                 
-                self.radius_melting_gain = 0.9999
+                self.radius_melting_gain = 1
 
 
                 self.task3_init = False
@@ -479,7 +479,7 @@ class PA:
         # FIELD VISUALIZATION
         # -------------------------------
 
-        self.ball_radius = new_ball_radius/3
+        self.ball_radius = new_ball_radius/self.ball_scale_factor
 
 
         #grass cleaning visualization PIXELS
@@ -564,6 +564,9 @@ class PA:
         #VISUALIZATION OF EXPERIMENT 1
 
         if g.task1:
+            self.radius_growth_gain = 0.2
+            self.radius_melting_gain = 0.999
+
             #visualization of ball
             current_time = pygame.time.get_ticks() / 1000 #get current time at each frame
             pygame.draw.circle(g.screenReference, g.cIce, (int(self.x_ball), int(self.y_ball)), new_ball_radius, 0)
@@ -590,7 +593,12 @@ class PA:
 
         # VISUALIZATION / LOGIC OF EXPERIMENT 2
         if g.task2 == True:
+
+            self.radius_melting_gain = 1 #disable melting
+
+
             if self.task2_finished and self.task2_finish_time is not None:
+
                 if pygame.time.get_ticks() - self.task2_finish_time >= 500:
                     print("Task 2 Finished!")
                     print("---------------------------------------------------")
@@ -601,6 +609,9 @@ class PA:
                         print(f"Trial {i}: achieved={result}, error={error}")
                     avg_error = sum(abs(r - self.task2_target_radius) for r in self.task2_results) / len(self.task2_results)
                     print("Average absolute error:", avg_error)
+
+                    percentage_error_task2 = abs(avg_error) / g.task2_target_radius * 100
+                    print("Percentage error: ", percentage_error_task2)
                     print("---------------------------------------------------")
                     sys.exit(0)
 

@@ -85,6 +85,9 @@ class PA:
         self.task2_first_snowball_size = None
         self.task2_initial_ball_size_at_startup = int(self.R + self.offset / 2) 
         self.task2_finish_time = None
+
+        self.use_force = False
+
         self.reset_experiments()
 
     def reset_experiments(self):
@@ -368,28 +371,19 @@ class PA:
         if force_engaged:
             fe = spring_force + damping_force
             ball_color = (0, 255, 0)
-
-            #ADDED
-            # BALL DYNAMICS
-            ball_force = -fe
-
-            # acceleration
-            self.ball_acceleration += ((-ball_force * self.force_scale) / (self.ball_mass * self.mass_scale))
-            # print(self.ball_acceleration)
-
-            # velocity
-            self.ball_velocity = (self.ball_acceleration)  # * dt)
-            # print(self.ball_velocity)
-            #------------------------------------------
-
         else:
             fe = np.array([0.0, 0.0])
             ball_color = (255, 0, 0)
 
-            #ADDED
-            # BALL DYNAMICS
-            ball_force = np.array([0.0, 0.0])
+        if not self.use_force:
+            fe = np.array([0.0, 0.0])
 
+        if force_engaged:
+            ball_force = -fe
+            self.ball_acceleration += ((-ball_force * self.force_scale) / (self.ball_mass * self.mass_scale))
+            self.ball_velocity = self.ball_acceleration
+        else:
+            ball_force = np.array([0.0, 0.0])
             self.ball_acceleration = np.array([0.0, 0.0])
             self.ball_velocity *= self.ball_damping
 

@@ -24,6 +24,7 @@ class PA:
         self.task3_init = True
 
         self.R = 60.0
+        print("self.R from init, to 60", self.R)
         self.R_max = 130.0
         self.R_min = 20
         self.offset = 40
@@ -44,7 +45,7 @@ class PA:
 
         self.radius_growth_gain = 0.1
         self.radius_increase_speed_threshold = 20.0
-        self.radius_melting_gain = 0.9
+        self.radius_melting_gain = 0.9999
 
         # visualization variables
         self.ball_position_x = 300
@@ -57,6 +58,7 @@ class PA:
         self.trail_positions = [] #holds the positions of where the field ball has been
         self.trail_colour = [] #holds how many times that position has been visited to adjust the colour
         self.motion_dir  = np.array([0.0, 0.0])
+        self.pixel_colours = [] #holds the pixels that have changed colours and their new colours
 
         #ADDED
         # ball rolling variables
@@ -94,6 +96,7 @@ class PA:
         self.x_ball = xc
         self.y_ball = yc
         self.R = 60.0
+        print("self.R from reset experiments, to 60", self.R)
         self.R_max = 130.0
         self.R_min = 20
         self.offset = 40
@@ -112,6 +115,7 @@ class PA:
         self.trail_colour = []
         self.ball_velocity = np.array([0.0, 0.0])
         self.ball_acceleration = np.array([0.0, 0.0])
+        self.pixel_colours = [] #holds the pixels that have changed colour to green
 
         self.collision_count = 0
         self.maze_completed = False
@@ -126,7 +130,23 @@ class PA:
         self.start_time_exp1 = None
         self.start_time_exp3 = None
 
+        self.trail_positions = []
+
         self.task3_init = True
+
+    def start_experiments(self, task1, task2, task3):
+        # clear out the green patches and reset size
+        self.trail_positions = []
+        #reset ball position based on the task
+        if task1 or task2:
+            self.ball_radius = 45
+            self.ball_position_x = 300
+            self.ball_position_y = 200
+        elif task3:
+            self.ball_radius = 20
+            self.ball_position_x = 50.0
+            self.ball_position_y = 50.0
+
 
     def point_in_triangle(self, px, py, A, B, C):
         # Helper function to compute the sign
@@ -146,13 +166,24 @@ class PA:
 
     def reset_task2_ball_to_startup_size(self):
         self.R = max(1.0, self.task2_initial_ball_size_at_startup - self.offset / 2)
+        print("self.R from resetting to initial task size for expeiment 2", self.R)
         self.k = -self.R / 15
 
+    def get_circle_pixels(self, cx, cy, r):
+        pixels = []
+        for x in range(cx - r, cx + r + 1):
+            for y in range(cy - r, cy + r + 1):
+                if (x - cx) ** 2 + (y - cy) ** 2 <= r ** 2:
+                    pixels.append((x, y))
+        pixels = np.asarray(pixels)
+        return pixels
 
 
     def run(self):
         p = self.physics
         g = self.graphics
+
+        print("radius in the beginning of run", self.R)
 
         keyups, xm, mouse_clicks = g.get_events()
 
@@ -185,17 +216,6 @@ class PA:
 
             # Field visualization
             # -------------------------------
-
-            times_visited_position = sum(
-                1 for x, y, r, col in self.trail_positions if x == self.ball_position_x and y == self.ball_position_y)
-            if times_visited_position == 0:  # the area becomes light green
-                self.trail_positions.append([self.ball_position_x, self.ball_position_y, self.ball_radius, g.cGreen3])
-            elif times_visited_position == 1:  # the area becomes a bit more green
-                self.trail_positions.append([self.ball_position_x, self.ball_position_y, self.ball_radius, g.cGreen2])
-            else:
-                self.trail_positions.append([self.ball_position_x, self.ball_position_y, self.ball_radius,
-                                             g.cGreen1])  # the area is fully cleaned out
-
 
             # MOTION OF FIELD BALL ROLLING WITH KEYS
             if key == ord('a'):
@@ -269,7 +289,7 @@ class PA:
                     g.task3 = True
                     if self.start_time_exp3 is None:
                         self.start_time_exp3 = pygame.time.get_ticks() / 1000
-
+            self.start_experiments(g.task1, g.task2, g.task3)
             # ----------------------------------
 
         #Buttons changing colour with hovering
@@ -360,6 +380,7 @@ class PA:
             inward_step = -v_radial * dt
             self.R += self.radius_growth_gain * inward_step
             self.R = min(self.R, self.R_max)
+            print("self.R from force field", self.R)
             self.k = -self.R / 15
             
 
@@ -406,16 +427,17 @@ class PA:
         self.ball_position_x = max(self.ball_radius, min(self.ball_position_x, field_width - self.ball_radius))
         self.ball_position_y = max(self.ball_radius, min(self.ball_position_y, field_height - self.ball_radius))
 
-        
 
         if g.task3:
             if self.task3_init:
+
                 self.ball_position_x = 50.0
                 self.ball_position_y = 50.0
                 self.prev_ball_position_x = 50.0
                 self.prev_ball_position_y = 50.0
                 
                 self.R = 45.0
+                print("self.R from if g.task 3, to 45", self.R)
                 self.R_max = 55.0
                 self.R_min = 40.0
                 
@@ -423,9 +445,11 @@ class PA:
                 self.mass_scale = 0.8
                 
                 self.radius_melting_gain = 0.9999
-                
+
+
                 self.task3_init = False
-            
+
+
             self.flower_positions = self.graphics.flower_positions
 
             for flower_x, flower_y in self.graphics.flower_positions:
@@ -463,17 +487,38 @@ class PA:
 
         self.ball_radius = new_ball_radius/3
 
-        times_visited_position = sum(1 for x, y, r, col in self.trail_positions if x == self.ball_position_x and y == self.ball_position_y)
-        if times_visited_position == 0:  # the area becomes light green
-            self.trail_positions.append([self.ball_position_x, self.ball_position_y, self.ball_radius, g.cGreen3])
-        elif times_visited_position == 1:  # the area becomes a bit more green
-            self.trail_positions.append([self.ball_position_x, self.ball_position_y, self.ball_radius, g.cGreen2])
-        else:
-            self.trail_positions.append([self.ball_position_x, self.ball_position_y, self.ball_radius, g.cGreen1])  # the area is fully cleaned out
+
+        #grass cleaning visualization PIXELS
+        # pixels_of_current_position = self.get_circle_pixels(int(self.ball_position_x), int(self.ball_position_y), int(self.ball_radius))
+        # print("pixels_of_current_position shape", pixels_of_current_position.shape)
+        # for x, y in pixels_of_current_position:
+        #     pixel_colour = g.screenField.get_at((x, y))
+        #     if pixel_colour == g.cWhite:
+        #         self.pixel_colours.append((x,y,g.cGreen3))
+        #     elif pixel_colour == g.cGreen3:
+        #         self.pixel_colours.append((x,y,g.cGreen2))
+        #     elif pixel_colour == g.Green2:
+        #         self.pixel_colours.append((x,y,g.cGreen1))
+
+        # if not self.trail_positions: #make the first entry ice coloured
+        #     self.trail_positions.append([self.ball_position_x, self.ball_position_y, self.ball_radius, g.cOrange])
+        if not g.menu:
+            print("started drawing")
+            times_visited_position = sum(1 for x, y, r, col in self.trail_positions if x == self.ball_position_x and y == self.ball_position_y)
+            if times_visited_position == 0:  # the area becomes light green
+                self.trail_positions.append([self.ball_position_x, self.ball_position_y, self.ball_radius, g.cGreen3])
+            elif times_visited_position == 1:  # the area becomes a bit more green
+                self.trail_positions.append([self.ball_position_x, self.ball_position_y, self.ball_radius, g.cGreen2])
+            else:
+                self.trail_positions.append([self.ball_position_x, self.ball_position_y, self.ball_radius, g.cGreen1])  # the area is fully cleaned out
+
 
 
         for i in range(len(self.trail_positions)):
             pygame.draw.circle(g.screenField, self.trail_positions[i][3], (self.trail_positions[i][0], self.trail_positions[i][1]), self.trail_positions[i][2])
+
+        # for i in range(len(self.pixel_colours)):
+        #     g.screenField.set_at((self.pixel_colours[i][0], self.pixel_colours[i][1]), self.pixel_colours[i][2])
 
         pygame.draw.circle(g.screenField, g.cIce, [self.ball_position_x, self.ball_position_y], self.ball_radius, 0)
         # pygame.draw.circle(g.screenField, g.cBlack, [self.dot1_position_x, self.dot1_position_y], 1, 0)
@@ -528,8 +573,7 @@ class PA:
             #visualization of ball
             current_time = pygame.time.get_ticks() / 1000 #get current time at each frame
             pygame.draw.circle(g.screenReference, g.cIce, (int(self.x_ball), int(self.y_ball)), new_ball_radius, 0)
-            pygame.draw.circle(g.screenReference, g.cIce, (int(self.x_ball), int(self.y_ball)),
-                               int(self.R + self.offset / 2), 2)
+            pygame.draw.circle(g.screenReference, g.cIce, (int(self.x_ball), int(self.y_ball)), int(self.R + self.offset / 2), 2)
             self.last_rec_radius = new_ball_radius
 
             if (current_time-self.start_time_exp1) > 10.00:

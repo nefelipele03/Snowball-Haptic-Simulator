@@ -7,7 +7,7 @@ from Physics import Physics
 from Graphics import Graphics
 
 class Start:
-    print("yahoooo")
+    print("Welcome to TURBO SNOWMAN-MAKING SIMULATOR X-TREME 3000. Get ready to roll!!!")
 
 
 class PA:
